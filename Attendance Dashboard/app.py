@@ -4,12 +4,13 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from dash import no_update
 import dash_bootstrap_components as dbc
+import plotly.graph_objs as go
 import base64
 import io
 import pandas as pd
 import datetime
 import openpyxl
-from data_processing import calculate_summary_statistics
+from data_processing import calculate_summary_statistics, calculate_student_enrolment_ug, calculate_student_enrolment_pgt
 
 # Initialize the Dash app (assuming you're doing this inside app.py)
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -50,9 +51,9 @@ def parse_contents(contents, filename, date):
             summary_data = calculate_summary_statistics(df)
 
             # Create a layout to display processed data using Bootstrap components
-            card_content = dbc.Row([
+            summary_content = dbc.Row([
                     dbc.Col(className='summary-card', children=[
-                        html.H3('Total Students', className='summary-title'),
+                        html.H3(['Total', html.Br(), 'Students'], className='summary-title'),
                         html.H3(f"{summary_data['total_students']}", className='summary-value'),
                         html.P([html.Span(f"{summary_data['dropout_rate']:.2f}%", style={'color': 'red'}), " dropout rate"], className='summary-small')
                     ], lg=4, md=6),
@@ -82,19 +83,55 @@ def parse_contents(contents, filename, date):
                     ], lg=4, md=6)
                 ], justify="start")
 
-            cards_layout = dbc.Container([
-                html.H5("Summary", style={'text-align': 'left', 'margin-bottom': '0.4rem', 'margin-left': '0.5em', 'margin-top': '0.4rem'}),
+            summary_section = dbc.Container([
+                html.H6("Summary", style={
+                    'text-align': 'left',
+                    'margin-bottom': '0.4rem',
+                    'margin-left': '0.5em',
+                    'margin-top': '0.4rem'
+                }),
                 dbc.Row(
-                    card_content,
-                    justify="around",
+                    summary_content,
+                    justify="center",
                 )
-            ], fluid=False, className="summary-section")
+            ], fluid=True, className="summary-section")
 
+            # Call the student enrolment function
+            ug_enrolment_data = calculate_student_enrolment_ug(df)
+            
+            # Format the enrolment data for display
+            total_ug_students_per_course_str = "Total UG Students per Course:\n" + "\n".join(f"{course}: {count}" for course, count in ug_enrolment_data['total_ug_students_per_course'].items())
+            total_ug_students_per_year_by_course_str = "Total UG Students per Year by Course:\n" + "\n".join(f"{year}: {counts}" for year, counts in ug_enrolment_data['total_ug_students_per_year_by_course'].items())
+            
+            # Create the content to display
+            ug_enrolment_content = html.Div([
+                html.P("UG Enrolment Statistics", style={'fontWeight': 'bold'}),
+                html.P(total_ug_students_per_course_str.replace("\n", ", "), style={'whiteSpace': 'pre-line'}),
+                html.P(total_ug_students_per_year_by_course_str.replace("\n", ", "), style={'whiteSpace': 'pre-line'})
+            ])
+            
+            # Call the student enrolment function
+            pgt_enrolment_data = calculate_student_enrolment_pgt(df)
+            total_pgt_students_per_course_str = "Total PGT Students per Course:\n" + "\n".join(f"{course}: {count}" for course, count in pgt_enrolment_data['total_pgt_students_per_course'].items())
+
+            # Since total_pgt_students_per_year_by_course is a single integer, we handle it directly
+            total_pgt_students_for_the_year_str = f"Total PGT Students for the Year: {pgt_enrolment_data['total_pgt_students_per_year_by_course']}"
+
+            # Create the content to display
+            pgt_enrolment_content = html.Div([
+                html.P("PGT Enrolment Statistics", style={'fontWeight': 'bold'}),
+                html.P(total_pgt_students_per_course_str.replace("\n", ", "), style={'whiteSpace': 'pre-line'}),
+                html.P(total_pgt_students_for_the_year_str, style={'whiteSpace': 'pre-line'})
+            ])
+            
             return html.Div([
                 html.H5(filename),
                 html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
-                cards_layout
+                summary_section,
+                ug_enrolment_content,
+                pgt_enrolment_content
             ], style={'padding-left': '20px', 'padding-top': '20px'})
+    
     except Exception as e:
         return html.Div(['There was an error processing this file: {}'.format(e)])
 

@@ -50,7 +50,7 @@ def calculate_summary_statistics(df):
 
     return summary_result
 
-def calculate_student_enrolment_ug(df):
+def calculate_ug_student_enrolment(df):
     # Check if necessary columns exist
     required_columns = ['User', 'Level of Study', 'Year of Course', 'Course Code', 'Quarter']
     for column in required_columns:
@@ -86,7 +86,7 @@ def calculate_student_enrolment_ug(df):
     }
     return ug_enrolment_result
 
-def calculate_student_enrolment_pgt(df):
+def calculate_pgt_student_enrolment(df):
     # Check if necessary columns exist
     required_columns = ['User', 'Level of Study', 'Year of Course', 'Course Code', 'Quarter']
     for column in required_columns:

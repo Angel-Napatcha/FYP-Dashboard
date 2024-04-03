@@ -33,3 +33,16 @@ def register_callbacks(app):
 
         # If no files are uploaded, don't update the upload interface or the loading state
         return [], {'display': 'none'}, no_update
+    
+    @app.callback(
+        [Output('ug-enrolment-content', 'style'),
+         Output('pgt-enrolment-content', 'style')],
+        [Input('student-enrolment-toggle', 'value')]
+    )
+    def toggle_student_enrolment(selected_option):
+        if selected_option == 'ug':
+            return {'display': 'block'}, {'display': 'none'}
+        elif selected_option == 'pgt':
+            return {'display': 'none'}, {'display': 'block'}
+        else:
+            return no_update, no_update

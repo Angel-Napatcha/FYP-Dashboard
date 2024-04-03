@@ -103,8 +103,10 @@ def parse_contents(contents, filename, date):
                     textfont=dict( 
                         family='sans-serif',
                     ),
+                    hoverinfo='none',
+                    hovertemplate='<b>Year:</b> ' + year + '<br><b>Enrolment:</b> %{x}<extra></extra>',
                     marker=dict(
-                    color=next(color_iterator, 'default_color')  # Cycles through the color list
+                        color=next(color_iterator, 'default_color')  # Cycles through the color list
                     )
                 )
                 
@@ -121,12 +123,12 @@ def parse_contents(contents, filename, date):
                     },
                 },
                 xaxis={
-                    'range': [0, 220]  
+                    'range': [0, 225]  
                     },
                 # Adjust the space between bars
                 bargap=0.30,  # Smaller values mean less space between individual bars
                 bargroupgap=0.25,
-                height=1250,
+                height=1300,
                 plot_bgcolor='rgba(0,0,0,0)',
                 margin=dict(
                     l=50,  # Left margin
@@ -212,45 +214,153 @@ def parse_contents(contents, filename, date):
                     'marginLeft': '0'
                 }
             )
+            
+            pgt_enrolment_data = calculate_student_enrolment_pgt(df)
+            
+            pgt_enrolment_graph_data = []
 
-            # Create a container for the graph with its custom legend, applying the CSS class
-            ug_enrolment_content = html.Div(
+            color = '#478DB8'
+            
+            # 'total_pgt_students_per_course' would be a dictionary with course codes as keys and student counts as values
+            courses = list(pgt_enrolment_data['total_pgt_students_per_course'].keys())
+            student_counts = list(pgt_enrolment_data['total_pgt_students_per_course'].values())
+            
+            trace = go.Bar(
+                name='Year 1',
+                x=student_counts,
+                y=courses,
+                orientation='h',
+                text=student_counts,
+                textposition='outside', 
+                textfont=dict( 
+                    family='sans-serif',
+                ),
+                hoverinfo='none',
+                hovertemplate='<b>Year:</b> Year 1<br><b>Enrolment:</b> %{x}<extra></extra>',
+                marker=dict(
+                    color=color
+                )
+            )
+                
+            pgt_enrolment_graph_data.append(trace)
+
+            layout = go.Layout(
+                barmode='group',
+                yaxis={
+                    'automargin': True,
+                    'autorange': 'reversed',
+                    'tickfont': {
+                        'family': 'sans-serif',
+                        'size': 12
+                    },
+                },
+                xaxis={
+                    'range': [0, 50]  
+                    },
+                bargap=0.30, 
+                bargroupgap=0.25,
+                height=350,
+                plot_bgcolor='rgba(0,0,0,0)',
+                margin=dict(
+                    l=50,  # Left margin
+                    r=30,  # Right margin
+                    t=15,  # Top margin
+                    b=15,  # Bottom margin
+                ), # Adjust bottom margin to accommodate the legend
+                    showlegend=False
+            )
+
+            pgt_enrolment_figure = go.Figure(data=pgt_enrolment_graph_data, layout=layout)
+
+            # The part of the layout to display the graph
+            pgt_enrolment_graph = dcc.Graph(
+                id='pgt-enrolment-graph',
+                figure=pgt_enrolment_figure, 
+                style={
+                'maxHeight': '350px',  # Adjust the max height as needed
+                'border-radius': '15px',
+                'overflowY': 'scroll',
+                'width': '100%'
+            })
+
+            # Define the custom legend
+            pgt_enrolment_legend = html.Div(
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Div(
+                                    [
+                                        html.Span(className='legend-circle', style={'backgroundColor': '#478DB8'}),
+                                        html.Span('Year 1', className='legend-text'),
+                                    ],
+                                    className='legend-entry'
+                                ),
+                            ],
+                            className='legend-column', width="auto"
+                        ),
+                    ],
+                    className='row'
+                ),
+                style={
+                    'marginTop': '20px',
+                    'marginLeft': '0'
+                }
+            )
+            
+            enrolment_content = html.Div(
                 [
-                    dbc.Row(html.H6("Student Enrolment", style={
-                    'text-align': 'left',
-                    'margin-bottom': '4em',
-                    'margin-left': '0em',
-                    'margin-top': '0.5em'
-                })),
-                    ug_enrolment_graph,  # The graph itself
-                    ug_enrolment_legend,  # The custom legend directly below the graph
+                    dbc.Row(
+                        html.H6("Student Enrolment", style={
+                            'text-align': 'left',
+                            'margin-bottom': '1em',
+                            'margin-top': '0.5em'
+                        }),
+                        justify="start",
+                        align="center"
+                    ),
+                    dbc.Row(
+                        dcc.Dropdown(
+                            id='student-enrolment-toggle',
+                            options=[
+                                {'label': 'UG', 'value': 'ug'},
+                                {'label': 'PGT', 'value': 'pgt'}
+                            ],
+                            value='ug',
+                            clearable=False, 
+                            className='custom-dropdown', 
+                        ),
+                        justify="start",
+                        align="center",
+                        style={
+                            'margin-bottom': '1em'
+                        }
+                    ),
+                    html.Div(
+                        [
+                            ug_enrolment_graph,  # The graph itself
+                            ug_enrolment_legend,  # The custom legend directly below the graph
+                        ],
+                        id='ug-enrolment-content',  # Add an ID for UG content
+                        style={'display': 'block'}  # Set initial display to 'block'
+                    ),
+                    html.Div(
+                        [
+                            pgt_enrolment_graph,
+                            pgt_enrolment_legend
+                        ],
+                        id='pgt-enrolment-content',  # Add an ID for PGT content
+                        style={'display': 'none'}  # Set initial display to 'none'
+                    )
                 ],
                 className='enrolment-container'
             )
-            
-            # Call the student enrolment function
-            pgt_enrolment_data = calculate_student_enrolment_pgt(df)
-            
-            
-            
-            total_pgt_students_per_course_str = "Total PGT Students per Course:\n" + "\n".join(f"{course}: {count}" for course, count in pgt_enrolment_data['total_pgt_students_per_course'].items())
-
-            # Since total_pgt_students_per_year_by_course is a single integer, we handle it directly
-            total_pgt_students_for_the_year_str = f"Total PGT Students for the Year: {pgt_enrolment_data['total_pgt_students_per_year_by_course']}"
-
-            # Create the content to display
-            pgt_enrolment_content = html.Div([
-                html.P("PGT Enrolment Statistics", style={'fontWeight': 'bold'}),
-                html.P(total_pgt_students_per_course_str.replace("\n", ", "), style={'whiteSpace': 'pre-line'}),
-                html.P(total_pgt_students_for_the_year_str, style={'whiteSpace': 'pre-line'})
-            ])
             
             return html.Div([
                 html.H5(filename),
                 html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
                 summary_section,
-                ug_enrolment_content,
-                pgt_enrolment_content
+                enrolment_content,
             ], style={'padding-left': '20px', 'padding-top': '20px'})
     
     except Exception as e:

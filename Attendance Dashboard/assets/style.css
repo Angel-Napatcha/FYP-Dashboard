@@ -128,3 +128,33 @@
     align-items: center; 
 }
 
+.custom-dropdown .Select-control {
+    background-color: #2f4bff3f;
+    border-radius: 10px;
+    border: none;
+    width: 65px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+}
+
+.custom-dropdown .Select-value,
+.custom-dropdown .Select-value-label {
+    font-size: 0.9em;
+    line-height: 35px;
+}
+
+.custom-dropdown .Select-placeholder {
+    font-size: 0.9em; /* Smaller font size for placeholder */
+    line-height: 35px; /* Adjusted to match the height of the dropdown */
+    color: #ADB5BD; /* Lighter color for placeholder text */
+}
+
+.custom-dropdown .Select-arrow-zone {
+    padding-left: 20px;
+    padding-right: 0px;
+}
+
+.custom-dropdown .Select-clear-zone {
+    display: none;
+}

@@ -96,7 +96,7 @@
     display: flex;
     align-items: center;
     margin-bottom: 0.5em;
-    margin-left: 0.25em; /* space between legend entries */
+    margin-left: 0.25em;
 }
   
 .legend-circle {

@@ -47,6 +47,7 @@ def parse_contents(contents, filename, date):
     try:
         if 'xls' in filename:
             df = pd.read_excel(io.BytesIO(decoded))
+            
             # Call the processing function
             summary_data = calculate_summary_statistics(df)
 
@@ -86,29 +87,169 @@ def parse_contents(contents, filename, date):
             summary_section = dbc.Container([
                 html.H6("Summary", style={
                     'text-align': 'left',
-                    'margin-bottom': '0.4rem',
+                    'margin-bottom': '0.25em',
                     'margin-left': '0.5em',
-                    'margin-top': '0.4rem'
+                    'margin-top': '0.5em'
                 }),
                 dbc.Row(
                     summary_content,
                     justify="center",
                 )
             ], fluid=True, className="summary-section")
-
-            # Call the student enrolment function
+            
             ug_enrolment_data = calculate_student_enrolment_ug(df)
             
-            # Format the enrolment data for display
-            total_ug_students_per_course_str = "Total UG Students per Course:\n" + "\n".join(f"{course}: {count}" for course, count in ug_enrolment_data['total_ug_students_per_course'].items())
-            total_ug_students_per_year_by_course_str = "Total UG Students per Year by Course:\n" + "\n".join(f"{year}: {counts}" for year, counts in ug_enrolment_data['total_ug_students_per_year_by_course'].items())
+            data = []
+            cumulative_sums = {key: 0 for key in ug_enrolment_data['total_ug_students_per_course'].keys()}
+
+            colors = ['#7BBC9A', '#478DB8', '#E9BA5D', '#E46E53', '#9C71C6']
+            color_iterator = iter(colors)
             
-            # Create the content to display
-            ug_enrolment_content = html.Div([
-                html.P("UG Enrolment Statistics", style={'fontWeight': 'bold'}),
-                html.P(total_ug_students_per_course_str.replace("\n", ", "), style={'whiteSpace': 'pre-line'}),
-                html.P(total_ug_students_per_year_by_course_str.replace("\n", ", "), style={'whiteSpace': 'pre-line'})
-            ])
+            for year in ug_enrolment_data['total_ug_students_per_year_by_course']:
+                year_data = ug_enrolment_data['total_ug_students_per_year_by_course'][year]
+                for i, key in enumerate(ug_enrolment_data['total_ug_students_per_course'].keys()):
+                    cumulative_sums[key] += year_data[i]
+
+                text_labels = [''] * len(year_data)  # Empty labels for all bar segments
+
+                # Only add the label for the last segment of the stack (assumes chronological order)
+                if year == list(ug_enrolment_data['total_ug_students_per_year_by_course'].keys())[-1]:
+                    text_labels = [str(cumulative_sums[key]) for key in ug_enrolment_data['total_ug_students_per_course'].keys()]
+                
+                trace = go.Bar(
+                    name=year,
+                    x=year_data,
+                    y=list(ug_enrolment_data['total_ug_students_per_course'].keys()),
+                    orientation='h',
+                    text=text_labels,
+                    textposition='outside', 
+                    textfont=dict( 
+                        family='sans-serif',
+                    ),
+                    marker=dict(
+                    color=next(color_iterator, 'default_color')  # Cycles through the color list
+                    )
+                )
+                
+                data.append(trace)
+
+            layout = go.Layout(
+                barmode='stack',
+                yaxis={
+                    'automargin': True,
+                    'autorange': 'reversed',
+                    'tickfont': {
+                        'family': 'sans-serif',
+                        'size': 12
+                    },
+                },
+                xaxis={
+                    'range': [0, 220]  
+                    },
+                # Adjust the space between bars
+                bargap=0.30,  # Smaller values mean less space between individual bars
+                bargroupgap=0.25,
+                height=1250,
+                plot_bgcolor='rgba(0,0,0,0)',
+                margin=dict(
+                    l=50,  # Left margin
+                    r=30,  # Right margin
+                    t=15,  # Top margin
+                    b=15,  # Bottom margin
+                ), # Adjust bottom margin to accommodate the legend
+                    showlegend=False
+            )
+
+            ug_enrolment_figure = go.Figure(data=data, layout=layout)
+
+            # The part of the layout to display the graph
+            ug_enrolment_graph = dcc.Graph(
+                id='ug-enrolment-graph',
+                figure=ug_enrolment_figure, 
+                style={
+                'maxHeight': '350px',  # Adjust the max height as needed
+                'border-radius': '15px',
+                'overflowY': 'scroll',
+                'width': '100%'
+            })
+            
+            # Define the custom legend with corrected structure for 3 columns
+            ug_enrolment_legend = html.Div(
+                dbc.Row(
+                    [
+                        dbc.Col(  # Column for Year 0 and Year 1
+                            [
+                                html.Div(
+                                    [
+                                        html.Span(className='legend-circle', style={'backgroundColor': '#7BBC9A'}),
+                                        html.Span('Year 0', className='legend-text'),
+                                    ],
+                                    className='legend-entry'
+                                ),
+                                html.Div(
+                                    [
+                                        html.Span(className='legend-circle', style={'backgroundColor': '#478DB8'}),
+                                        html.Span('Year 1', className='legend-text'),
+                                    ],
+                                    className='legend-entry'
+                                ),
+                            ],
+                            className='legend-column', width="auto"
+                        ),
+                        dbc.Col(
+                            [
+                                html.Div(
+                                    [
+                                        html.Span(className='legend-circle', style={'backgroundColor': '#E9BA5D'}),
+                                        html.Span('Year 2', className='legend-text'),
+                                    ],
+                                    className='legend-entry'
+                                ),
+                                html.Div(
+                                    [
+                                        html.Span(className='legend-circle', style={'backgroundColor': '#E46E53'}),
+                                        html.Span('Year 3', className='legend-text'),
+                                    ],
+                                    className='legend-entry'
+                                ),
+                            ],
+                            className='legend-column', width="auto"
+                        ),
+                        dbc.Col( 
+                            [
+                                html.Div(
+                                    [
+                                        html.Span(className='legend-circle', style={'backgroundColor': '#9C71C6'}),
+                                        html.Span('Year 4', className='legend-text'),
+                                    ],
+                                    className='legend-entry'
+                                ),
+                            ],
+                            className='legend-column', width="auto"
+                        ),
+                    ],
+                    className='row'
+                ),
+                style={
+                    'marginTop': '20px',
+                    'marginLeft': '0'
+                }
+            )
+
+            # Create a container for the graph with its custom legend, applying the CSS class
+            ug_enrolment_content = html.Div(
+                [
+                    dbc.Row(html.H6("Student Enrolment", style={
+                    'text-align': 'left',
+                    'margin-bottom': '4em',
+                    'margin-left': '0em',
+                    'margin-top': '0.5em'
+                })),
+                    ug_enrolment_graph,  # The graph itself
+                    ug_enrolment_legend,  # The custom legend directly below the graph
+                ],
+                className='enrolment-container'
+            )
             
             # Call the student enrolment function
             pgt_enrolment_data = calculate_student_enrolment_pgt(df)

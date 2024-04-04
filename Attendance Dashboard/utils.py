@@ -6,7 +6,7 @@ import base64
 import io
 import pandas as pd
 import datetime
-from data_processing import calculate_summary_statistics, calculate_ug_student_enrolment, calculate_pgt_student_enrolment
+from data_processing import calculate_summary_statistics, calculate_ug_student_enrolment, calculate_pgt_student_enrolment, calculate_ug_attendance_rate, calculate_pgt_attendance_rate
 
 def save_file(name, content):
     """Decode and store a file uploaded with Plotly Dash."""
@@ -119,7 +119,7 @@ def create_ug_enrolment_graph(df):
     data = []
     cumulative_sums = {key: 0 for key in ug_enrolment_data['total_ug_students_per_course'].keys()}
 
-    colors = ['#7BBC9A', '#478DB8', '#E9BA5D', '#E46E53', '#9C71C6']
+    colors = ['#7BBC9A', '#478DB8', '#E9BA5D', '#E46E53', '#9C71C6', '#AF7C4F']
     color_iterator = iter(colors)
     
     for year in ug_enrolment_data['total_ug_students_per_year_by_course']:
@@ -163,8 +163,12 @@ def create_ug_enrolment_graph(df):
             },
         },
         xaxis={
-            'range': [0, 225]  
+            'range': [0, 225],
+            'tickfont': {
+                'family': 'sans-serif',
+                'size': 12
             },
+        },
         # Adjust the space between bars
         bargap=0.30,  # Smaller values mean less space between individual bars
         bargroupgap=0.25,
@@ -243,6 +247,13 @@ def create_ug_enrolment_graph(df):
                             ],
                             className='legend-entry'
                         ),
+                        html.Div(
+                            [
+                                html.Span(className='legend-circle', style={'backgroundColor': '#AF7C4F'}),
+                                html.Span('Year 5', className='legend-text'),
+                            ],
+                            className='legend-entry'
+                        ),
                     ],
                     className='legend-column', width="auto"
                 ),
@@ -299,8 +310,12 @@ def create_pgt_enrolment_graph(df):
             },
         },
         xaxis={
-            'range': [0, 50]  
-            },
+            'range': [0, 50],
+            'tickfont': {
+                'family': 'sans-serif',
+                'size': 12
+            },  
+        },
         bargap=0.30, 
         bargroupgap=0.25,
         height=350,
@@ -378,6 +393,7 @@ def create_enrolment_section(df):
                     ],
                     value='ug',
                     clearable=False, 
+                    searchable=False,
                     className='custom-dropdown', 
                 ),
                 justify="start",
@@ -388,24 +404,67 @@ def create_enrolment_section(df):
             ),
             html.Div(
                 [
-                    ug_enrolment_graph,  # The graph itself
-                    ug_enrolment_legend,  # The custom legend directly below the graph
+                    ug_enrolment_graph,
+                    ug_enrolment_legend, 
                 ],
-                id='ug-enrolment-content',  # Add an ID for UG content
-                style={'display': 'block'}  # Set initial display to 'block'
+                id='ug-enrolment-content', 
+                style={'display': 'block'} 
             ),
             html.Div(
                 [
                     pgt_enrolment_graph,
                     pgt_enrolment_legend
                 ],
-                id='pgt-enrolment-content',  # Add an ID for PGT content
-                style={'display': 'none'}  # Set initial display to 'none'
+                id='pgt-enrolment-content', 
+                style={'display': 'none'} 
             )
         ],
         className='enrolment-container'
     )
     return enrolment_content
+
+
+def create_ug_attendance_graph(df):
+    ug_attendance = calculate_ug_attendance_rate(df)
+
+    attendance_str_list = []
+
+    for course_year, attendance_data in ug_attendance.items():
+        course_code, year_of_course = course_year
+        attendance_by_quarter = attendance_data['attendance_by_quarter']
+        average_attendance = attendance_data['average_attendance']
+
+        attendance_str = f"Course Code: {course_code}, Year of Course: {year_of_course}, Average Attendance: {average_attendance:.2f}%\n"
+        attendance_str_list.append(attendance_str)
+
+        for quarter, attendance in attendance_by_quarter.items():
+            attendance_str = f"    Quarter {quarter}: {attendance:.2f}%"
+            attendance_str_list.append(attendance_str)
+
+    attendance_str = "\n".join(attendance_str_list)
+
+    return attendance_str
+
+def create_pgt_attendance_graph(df):
+    pgt_attendance = calculate_pgt_attendance_rate(df)
+
+    attendance_str_list = []
+
+    for course_year, attendance_data in pgt_attendance.items():
+        course_code, year_of_course = course_year
+        attendance_by_quarter = attendance_data['attendance_by_quarter']
+        average_attendance = attendance_data['average_attendance']
+
+        attendance_str = f"Course Code: {course_code}, Year of Course: {year_of_course}, Average Attendance: {average_attendance:.2f}%\n"
+        attendance_str_list.append(attendance_str)
+
+        for quarter, attendance in attendance_by_quarter.items():
+            attendance_str = f"    Quarter {quarter}: {attendance:.2f}%"
+            attendance_str_list.append(attendance_str)
+
+    attendance_str = "\n".join(attendance_str_list)
+
+    return attendance_str
 
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
@@ -420,13 +479,17 @@ def parse_contents(contents, filename, date):
             
             summary_section = create_summary_section(df)
             enrolment_section = create_enrolment_section(df)
+            # ug_attendance = create_ug_attendance_graph(df)
+            # pgt_attendance = create_pgt_attendance_graph(df)
             
             return html.Div([
                 html.H5(filename),
                 html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
                 summary_section,
                 enrolment_section,
-            ], style={'padding-left': '20px', 'padding-top': '20px'})
+                # ug_attendance,
+                # pgt_attendance
+            ], style={'padding-left': '20px', 'padding-right': '20px', 'padding-top': '20px'})
     
     except Exception as e:
         return html.Div(['There was an error processing this file: {}'.format(e)])

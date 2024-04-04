@@ -71,12 +71,12 @@ def calculate_ug_student_enrolment(df):
     total_ug_students_per_course = ug_students_q4.groupby('Course Code')['User'].nunique().to_dict()
 
     # Total students per year by course
-    total_ug_students_per_year_by_course = {'Year 0': [], 'Year 1': [], 'Year 2': [], 'Year 3': [], 'Year 4': []}
+    total_ug_students_per_year_by_course = {'Year 0': [], 'Year 1': [], 'Year 2': [], 'Year 3': [], 'Year 4': [], 'Year 5': []}
 
     # Iterate through the courses to get counts per year
     for course in ug_students_q4['Course Code'].unique():
         course_data = ug_students_q4[ug_students_q4['Course Code'] == course]
-        for year in range(5):  # Adjusted to include Year 0 to Year 4
+        for year in range(6):  # Adjusted to include Year 0 to Year 5
             count = course_data[course_data['Year of Course'] == year]['User'].nunique()
             total_ug_students_per_year_by_course[f'Year {year}'].append(count)
 
@@ -112,6 +112,96 @@ def calculate_pgt_student_enrolment(df):
     # Building the result dictionary
     pgt_enrolment_result = {
         'total_pgt_students_per_course': total_pgt_students_per_course,
-        'total_pgt_students_per_year_by_course': total_pgt_students_per_year_by_course  # This replaces the previous per-year structure
+        'total_pgt_students_per_year_by_course': total_pgt_students_per_year_by_course
     }
     return pgt_enrolment_result
+
+def calculate_ug_attendance_rate(df):
+    required_columns = ['% Attendance', 'Level of Study', 'Year of Course', 'Course Code', 'Quarter']
+    for column in required_columns:
+        if column not in df.columns:
+            raise ValueError("Missing required column: {}".format(column))
+
+    # Ensure that the columns are in the correct format
+    df['% Attendance'] = pd.to_numeric(df['% Attendance'], errors='coerce')
+    df['Year of Course'] = pd.to_numeric(df['Year of Course'], errors='coerce')
+    df['Quarter'] = pd.to_numeric(df['Quarter'], errors='coerce')
+
+    # Drop rows with NaN values that were created due to coercion errors
+    df = df.dropna(subset=['% Attendance', 'Year of Course', 'Quarter'])
+
+    ug_students = df[(df['Level of Study'] == 'UG')]
+
+    ug_attendance = {}
+
+    for course_code, group in ug_students.groupby(['Course Code', 'Year of Course']):
+        course_attendance = group.pivot_table(
+            index='Quarter',
+            values='% Attendance',
+            aggfunc='mean'
+        ).to_dict()
+
+        for course_code, group in ug_students.groupby(['Course Code', 'Year of Course']):
+            course_attendance = group.pivot_table(
+                index='Quarter',
+                values='% Attendance',
+                aggfunc='mean'
+            )['% Attendance'].to_dict() # Directly access the '% Attendance' to get a dictionary of quarters to attendance values.
+
+            # Multiply each quarter's attendance by 100 to convert to percentage
+            course_attendance = {quarter: attendance * 100 for quarter, attendance in course_attendance.items()}
+            
+            # Calculate the average attendance
+            if course_attendance:  # Ensure the dictionary is not empty
+                average_attendance = sum(course_attendance.values()) / len(course_attendance)
+                ug_attendance[course_code] = {
+                    'attendance_by_quarter': course_attendance,
+                    'average_attendance': average_attendance
+                }
+
+    return ug_attendance
+
+def calculate_pgt_attendance_rate(df):
+    required_columns = ['% Attendance', 'Level of Study', 'Year of Course', 'Course Code', 'Quarter']
+    for column in required_columns:
+        if column not in df.columns:
+            raise ValueError("Missing required column: {}".format(column))
+
+    # Ensure that the columns are in the correct format
+    df['% Attendance'] = pd.to_numeric(df['% Attendance'], errors='coerce')
+    df['Year of Course'] = pd.to_numeric(df['Year of Course'], errors='coerce')
+    df['Quarter'] = pd.to_numeric(df['Quarter'], errors='coerce')
+
+    # Drop rows with NaN values that were created due to coercion errors
+    df = df.dropna(subset=['% Attendance', 'Year of Course', 'Quarter'])
+
+    pgt_students = df[(df['Level of Study'] == 'PGT')]
+
+    pgt_attendance = {}
+
+    for course_code, group in pgt_students.groupby(['Course Code', 'Year of Course']):
+        course_attendance = group.pivot_table(
+            index='Quarter',
+            values='% Attendance',
+            aggfunc='mean'
+        ).to_dict()
+
+        for course_code, group in pgt_students.groupby(['Course Code', 'Year of Course']):
+            course_attendance = group.pivot_table(
+                index='Quarter',
+                values='% Attendance',
+                aggfunc='mean'
+            )['% Attendance'].to_dict() # Directly access the '% Attendance' to get a dictionary of quarters to attendance values.
+
+            # Multiply each quarter's attendance by 100 to convert to percentage
+            course_attendance = {quarter: attendance * 100 for quarter, attendance in course_attendance.items()}
+            
+            # Calculate the average attendance
+            if course_attendance:  # Ensure the dictionary is not empty
+                average_attendance = sum(course_attendance.values()) / len(course_attendance)
+                pgt_attendance[course_code] = {
+                    'attendance_by_quarter': course_attendance,
+                    'average_attendance': average_attendance
+                }
+
+    return pgt_attendance

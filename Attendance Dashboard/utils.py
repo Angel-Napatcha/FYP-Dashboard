@@ -6,7 +6,7 @@ import base64
 import io
 import pandas as pd
 import datetime
-from data_processing import calculate_summary_statistics, calculate_ug_student_enrolment, calculate_pgt_student_enrolment, calculate_ug_attendance_rate, calculate_pgt_attendance_rate
+from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate
 
 def save_file(name, content):
     """Decode and store a file uploaded with Plotly Dash."""
@@ -14,7 +14,7 @@ def save_file(name, content):
     with open(os.path.join('uploaded_files', name), "wb") as fp:
         fp.write(base64.decodebytes(data))
 
-def create_summary_section(df):
+def create_summary_cards(df):
     # Call the processing function
     summary_data = calculate_summary_statistics(df)
 
@@ -23,7 +23,11 @@ def create_summary_section(df):
         dbc.Col(
             className='summary-card',
             children=[
-                html.H3(['Total', html.Br(), 'Students'], className='summary-title'),
+                html.H3([
+                    'Total', 
+                    html.Br(), 
+                    'Students'
+                ], className='summary-title'),
                 html.H3(f"{summary_data['total_students']}", className='summary-value'),
                 html.P(
                     [
@@ -38,7 +42,11 @@ def create_summary_section(df):
         dbc.Col(
             className='summary-card',
             children=[
-                html.H3('Average Attendance Rate', className='summary-title'),
+                html.H3([
+                    'Average', 
+                    html.Br(), 
+                    'Attendance Rate'
+                ], className='summary-title'),
                 html.H3(f"{summary_data['average_attendance']:.2f}%", className='summary-value')
             ],
             lg=4, md=6
@@ -46,14 +54,13 @@ def create_summary_section(df):
         dbc.Col(
             className='summary-card',
             children=[
-                html.H3(
-                    [
-                        'Course with ', 
-                        html.Span('Highest', style={'color': 'green'}), 
-                        ' Attendance Rate'
-                    ], 
-                    className='summary-title'
-                ),
+                html.H3([
+                    'Course with ', 
+                    html.Span('Highest', style={'color': 'green'}), 
+                    html.Br(),
+                    ' Attendance Rate'
+                ], 
+                className='summary-title'),
                 html.H3(summary_data['course_with_highest_attendance'][0], className='summary-value'),
                 html.P(
                     [
@@ -68,14 +75,13 @@ def create_summary_section(df):
         dbc.Col(
             className='summary-card',
             children=[
-                html.H3(
-                    [
-                        'Course with ', 
-                        html.Span('Lowest', style={'color': 'red'}), 
-                        ' Attendance Rate'
-                    ], 
-                    className='summary-title'
-                ),
+                html.H3([
+                    'Course with ', 
+                    html.Span('Lowest', style={'color': 'red'}), 
+                    html.Br(),
+                    ' Attendance Rate'
+                ], 
+                className='summary-title'),
                 html.H3(summary_data['course_with_lowest_attendance'][0], className='summary-value'),
                 html.P(
                     [
@@ -90,14 +96,22 @@ def create_summary_section(df):
         dbc.Col(
             className='summary-card',
             children=[
-                html.H3('Average Submission Rate', className='summary-title'),
+                html.H3([
+                    'Average', 
+                    html.Br(), 
+                    'Submission Rate'
+                ], className='summary-title'),
                 html.H3(f"{summary_data['average_submission_rate']:.2f}%", className='summary-value')
             ],
             lg=4, md=6
         )
-    ], justify="start")
+    ], justify="center")
 
+    return summary_content
 
+def create_summary_section(df):
+    summary_content = create_summary_cards(df)
+    
     summary_section = dbc.Container([
         html.H6("Summary", style={
             'text-align': 'left',
@@ -113,267 +127,82 @@ def create_summary_section(df):
     
     return summary_section
 
-def create_ug_enrolment_graph(df):
-    ug_enrolment_data = calculate_ug_student_enrolment(df)
-            
-    data = []
-    cumulative_sums = {key: 0 for key in ug_enrolment_data['total_ug_students_per_course'].keys()}
+def create_enrolment_graph(df, level_of_study):
+    if level_of_study == 'UG':
+        colors = ['#7BBC9A', '#478DB8', '#E9BA5D', '#E46E53', '#9C71C6', '#AF7C4F']
+        xaxis_range = [-8, 225]
+        bar_height = 30
+        enrolment_id = 'ug-enrolment-graph'
+        year_level = 'Year'
+    elif level_of_study == 'PGT':
+        colors = ['#478DB8', '#E9BA5D']
+        xaxis_range = [-2, 50]
+        bar_height = 33
+        enrolment_id = 'pgt-enrolment-graph'
+        year_level = 'Year'
 
-    colors = ['#7BBC9A', '#478DB8', '#E9BA5D', '#E46E53', '#9C71C6', '#AF7C4F']
+    enrolment_data = calculate_student_enrolment(df, level_of_study)
+    num_courses = len(enrolment_data['total_students_per_course'])
+    graph_height = num_courses * (bar_height) # bar_padding can be adjusted if needed
+    
+    data = []
+    cumulative_sums = {key: 0 for key in enrolment_data['total_students_per_course'].keys()}
     color_iterator = iter(colors)
     
-    for year in ug_enrolment_data['total_ug_students_per_year_by_course']:
-        year_data = ug_enrolment_data['total_ug_students_per_year_by_course'][year]
-        for i, key in enumerate(ug_enrolment_data['total_ug_students_per_course'].keys()):
+    for year in enrolment_data['total_students_per_year_by_course']:
+        year_data = enrolment_data['total_students_per_year_by_course'][year]
+        for i, key in enumerate(enrolment_data['total_students_per_course'].keys()):
             cumulative_sums[key] += year_data[i]
 
-        text_labels = [''] * len(year_data)  # Empty labels for all bar segments
-
-        # Only add the label for the last segment of the stack (assumes chronological order)
-        if year == list(ug_enrolment_data['total_ug_students_per_year_by_course'].keys())[-1]:
-            text_labels = [str(cumulative_sums[key]) for key in ug_enrolment_data['total_ug_students_per_course'].keys()]
+        text_labels = [''] * len(year_data)
+        if year == list(enrolment_data['total_students_per_year_by_course'].keys())[-1]:
+            text_labels = [str(cumulative_sums[key]) for key in enrolment_data['total_students_per_course'].keys()]
         
         trace = go.Bar(
             name=year,
             x=year_data,
-            y=list(ug_enrolment_data['total_ug_students_per_course'].keys()),
+            y=list(enrolment_data['total_students_per_course'].keys()),
             orientation='h',
             text=text_labels,
             textposition='outside', 
-            textfont=dict( 
-                family='sans-serif',
-            ),
+            textfont=dict(family='sans-serif'),
             hoverinfo='none',
-            hovertemplate='<b>Year:</b> ' + year + '<br><b>Enrolment:</b> %{x}<extra></extra>',
-            marker=dict(
-                color=next(color_iterator, 'default_color')  # Cycles through the color list
-            )
+            hovertemplate=f'<b>{year_level}:</b> ' + year + '<br><b>Enrolment:</b> %{x}<extra></extra>',
+            marker=dict(color=next(color_iterator, '#000000'))  # Default to black if colors run out
         )
-        
         data.append(trace)
 
     layout = go.Layout(
         barmode='stack',
-        yaxis={
-            'automargin': True,
-            'autorange': 'reversed',
-            'tickfont': {
-                'family': 'sans-serif',
-                'size': 12
-            },
-        },
-        xaxis={
-            'range': [0, 225],
-            'tickfont': {
-                'family': 'sans-serif',
-                'size': 12
-            },
-        },
-        # Adjust the space between bars
-        bargap=0.30,  # Smaller values mean less space between individual bars
-        bargroupgap=0.25,
-        height=1300,
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(
-            l=50,  # Left margin
-            r=30,  # Right margin
-            t=15,  # Top margin
-            b=15,  # Bottom margin
-        ),
-            showlegend=False
+        yaxis={'automargin': True, 'autorange': 'reversed', 'tickfont': {'size': 12}},
+        xaxis={'range': xaxis_range, 'tickfont': {'size': 12}},
+        bargap=0.30, bargroupgap=0.25, height=graph_height, showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=50, r=30, t=15, b=15)
     )
 
-    ug_enrolment_figure = go.Figure(data=data, layout=layout)
+    enrolment_figure = go.Figure(data=data, layout=layout)
+    enrolment_graph = dcc.Graph(id=enrolment_id, figure=enrolment_figure, style={'maxHeight': '450px', 'border-radius': '15px', 'overflowY': 'scroll', 'width': '100%'})
 
-    # The part of the layout to display the graph
-    ug_enrolment_graph = dcc.Graph(
-        id='ug-enrolment-graph',
-        figure=ug_enrolment_figure, 
-        style={
-        'maxHeight': '350px',  # Adjust the max height as needed
-        'border-radius': '15px',
-        'overflowY': 'scroll',
-        'width': '100%'
-    })
+    # Legends
+    year_levels = [f'Year {i}' for i in range(len(colors))]
+    legend_entries = []
+    for color, year in zip(colors, year_levels):
+        legend_entry = html.Div([
+            html.Span(className='legend-circle', style={'backgroundColor': color}),
+            html.Span(year, className='legend-text')
+        ], className='legend-entry')
+        legend_entries.append(legend_entry)
+    # Arrange entries into columns of two (can be adjusted based on the number of years)
+    columns = [dbc.Col(legend_entries[i:i + 2], className='legend-column', width="auto") for i in range(0, len(legend_entries), 2)]
+    enrolment_legend = html.Div(dbc.Row(columns, className='row'), style={'marginTop': '20px', 'marginLeft': '0'})
     
-    # Define the custom legend with corrected structure for 3 columns
-    ug_enrolment_legend = html.Div(
-        dbc.Row(
-            [
-                dbc.Col(  # Column for Year 0 and Year 1
-                    [
-                        html.Div(
-                            [
-                                html.Span(className='legend-circle', style={'backgroundColor': '#7BBC9A'}),
-                                html.Span('Year 0', className='legend-text'),
-                            ],
-                            className='legend-entry'
-                        ),
-                        html.Div(
-                            [
-                                html.Span(className='legend-circle', style={'backgroundColor': '#478DB8'}),
-                                html.Span('Year 1', className='legend-text'),
-                            ],
-                            className='legend-entry'
-                        ),
-                    ],
-                    className='legend-column', width="auto"
-                ),
-                dbc.Col(
-                    [
-                        html.Div(
-                            [
-                                html.Span(className='legend-circle', style={'backgroundColor': '#E9BA5D'}),
-                                html.Span('Year 2', className='legend-text'),
-                            ],
-                            className='legend-entry'
-                        ),
-                        html.Div(
-                            [
-                                html.Span(className='legend-circle', style={'backgroundColor': '#E46E53'}),
-                                html.Span('Year 3', className='legend-text'),
-                            ],
-                            className='legend-entry'
-                        ),
-                    ],
-                    className='legend-column', width="auto"
-                ),
-                dbc.Col( 
-                    [
-                        html.Div(
-                            [
-                                html.Span(className='legend-circle', style={'backgroundColor': '#9C71C6'}),
-                                html.Span('Year 4', className='legend-text'),
-                            ],
-                            className='legend-entry'
-                        ),
-                        html.Div(
-                            [
-                                html.Span(className='legend-circle', style={'backgroundColor': '#AF7C4F'}),
-                                html.Span('Year 5', className='legend-text'),
-                            ],
-                            className='legend-entry'
-                        ),
-                    ],
-                    className='legend-column', width="auto"
-                ),
-            ],
-            className='row'
-        ),
-        style={
-            'marginTop': '20px',
-            'marginLeft': '0'
-        }
-    )
-    
-    return ug_enrolment_graph, ug_enrolment_legend
-
-def create_pgt_enrolment_graph(df):
-    
-    pgt_enrolment_data = calculate_pgt_student_enrolment(df)
-            
-    data = []
-
-    color = '#478DB8'
-    
-    # 'total_pgt_students_per_course' would be a dictionary with course codes as keys and student counts as values
-    courses = list(pgt_enrolment_data['total_pgt_students_per_course'].keys())
-    student_counts = list(pgt_enrolment_data['total_pgt_students_per_course'].values())
-    
-    trace = go.Bar(
-        name='Year 1',
-        x=student_counts,
-        y=courses,
-        orientation='h',
-        text=student_counts,
-        textposition='outside', 
-        textfont=dict( 
-            family='sans-serif',
-        ),
-        hoverinfo='none',
-        hovertemplate='<b>Year:</b> Year 1<br><b>Enrolment:</b> %{x}<extra></extra>',
-        marker=dict(
-            color=color
-        )
-    )
-        
-    data.append(trace)
-
-    layout = go.Layout(
-        barmode='group',
-        yaxis={
-            'automargin': True,
-            'autorange': 'reversed',
-            'tickfont': {
-                'family': 'sans-serif',
-                'size': 12
-            },
-        },
-        xaxis={
-            'range': [0, 50],
-            'tickfont': {
-                'family': 'sans-serif',
-                'size': 12
-            },  
-        },
-        bargap=0.30, 
-        bargroupgap=0.25,
-        height=350,
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(
-            l=50,  # Left margin
-            r=30,  # Right margin
-            t=15,  # Top margin
-            b=15,  # Bottom margin
-        ), # Adjust bottom margin to accommodate the legend
-            showlegend=False
-    )
-
-    pgt_enrolment_figure = go.Figure(data=data, layout=layout)
-
-    # The part of the layout to display the graph
-    pgt_enrolment_graph = dcc.Graph(
-        id='pgt-enrolment-graph',
-        figure=pgt_enrolment_figure, 
-        style={
-        'maxHeight': '350px',  # Adjust the max height as needed
-        'border-radius': '15px',
-        'overflowY': 'scroll',
-        'width': '100%'
-    })
-
-    # Define the custom legend
-    pgt_enrolment_legend = html.Div(
-        dbc.Row(
-            [
-                dbc.Col(
-                    [
-                        html.Div(
-                            [
-                                html.Span(className='legend-circle', style={'backgroundColor': '#478DB8'}),
-                                html.Span('Year 1', className='legend-text'),
-                            ],
-                            className='legend-entry'
-                        ),
-                    ],
-                    className='legend-column', width="auto"
-                ),
-            ],
-            className='row'
-        ),
-        style={
-            'marginTop': '20px',
-            'marginLeft': '0'
-        }
-    )
-    
-    return pgt_enrolment_graph, pgt_enrolment_legend
+    return enrolment_graph, enrolment_legend
 
 def create_enrolment_section(df):
-    ug_enrolment_graph, ug_enrolment_legend = create_ug_enrolment_graph(df)
-    pgt_enrolment_graph, pgt_enrolment_legend = create_pgt_enrolment_graph(df)
+    ug_enrolment_graph, ug_enrolment_legend = create_enrolment_graph(df, 'UG')
+    pgt_enrolment_graph, pgt_enrolment_legend = create_enrolment_graph(df, 'PGT')
     
-    enrolment_content = html.Div(
+    enrolment_section = html.Div(
         [
             dbc.Row(
                 html.H6("Student Enrolment", style={
@@ -421,50 +250,117 @@ def create_enrolment_section(df):
         ],
         className='enrolment-container'
     )
-    return enrolment_content
+    return enrolment_section
 
+def create_attendance_graph(df, level_of_study, year_of_course):
+    # Data preparation
+    attendance = calculate_attendance_rate(df, level_of_study, year_of_course)
+    courses = [course_code[0] for course_code in attendance.keys()]
+    quarters = ['Week 1-3', 'Week 4-6', 'Week 6-9', 'Week 9-12']
+    num_quarters = len(quarters)
+    y_data = [list(course_data['attendance_by_quarter'].values()) for course_data in attendance.values()]
+    average_attendance = [course_data['average_attendance'] for course_data in attendance.values()]
+    colors = ['#7252A7', '#9099FF', '#6EB1FF', '#9CDBFF']
 
-def create_ug_attendance_graph(df):
-    ug_attendance = calculate_ug_attendance_rate(df)
+    # Constants for bar dimensions and spacing
+    bar_width = 0.15  # Fixed width for each bar
+    space_between_bars = 0.03
+    space_between_groups = 0.2
 
-    attendance_str_list = []
+    # Calculate x positions for each bar and adjust the graph width
+    x_positions = []
+    current_x = 0
+    for i in range(len(courses)):
+        group_positions = []
+        for j in range(num_quarters):
+            group_positions.append(current_x + j * (bar_width + space_between_bars))
+        x_positions.append(group_positions)
+        current_x += (num_quarters * (bar_width + space_between_bars) - space_between_bars) + space_between_groups
 
-    for course_year, attendance_data in ug_attendance.items():
-        course_code, year_of_course = course_year
-        attendance_by_quarter = attendance_data['attendance_by_quarter']
-        average_attendance = attendance_data['average_attendance']
+    # Calculate dynamic width of the graph
+    graph_width = max(275, len(courses) * 80)
 
-        attendance_str = f"Course Code: {course_code}, Year of Course: {year_of_course}, Average Attendance: {average_attendance:.2f}%\n"
-        attendance_str_list.append(attendance_str)
+    # Plotting
+    traces = []
+    for i, course in enumerate(courses):
+        for j, quarter in enumerate(quarters):
+            traces.append(go.Bar(
+                x=[x_positions[i][j]],
+                y=[y_data[i][j]],
+                name=quarter,
+                marker_color=colors[j],
+                width=bar_width,
+                hovertemplate=f'<b>Week:</b> {quarter}<br><b>Attendance Rate:</b> {y_data[i][j]:.2f}%<extra></extra>', 
+            ))
 
-        for quarter, attendance in attendance_by_quarter.items():
-            attendance_str = f"    Quarter {quarter}: {attendance:.2f}%"
-            attendance_str_list.append(attendance_str)
+    # Line chart for average attendance
+    traces.append(go.Scatter(
+        x=[sum(pos)/len(pos) for pos in x_positions],
+        y=average_attendance,
+        mode='lines+markers',
+        name='Average Attendance',
+        marker=dict(color='#FFA41B', size=8),
+        line=dict(color='#FFA41B'),
+        hovertemplate='<b>Average Attendance:</b> %{y:.2f}%<extra></extra>',
+    ))
+    
+    # Calculate dynamic range for x-axis
+    x_axis_range = [min(x_positions[0]) - bar_width - 0.1, max(x_positions[-1]) + bar_width]
 
-    attendance_str = "\n".join(attendance_str_list)
+    # Layout configuration
+    layout = go.Layout(
+        yaxis= 
+        dict(
+            title=dict(
+                text='Attendance (%)',
+                font=dict(
+                    family='sans-serif'
+                ),
+            ),
+            tickfont=dict(
+                family='sans-serif'               
+            ),
+            range=[0, 100],
+            dtick=25,
+            automargin=True 
+        ),
+        xaxis=dict(
+            tickfont=dict(
+                family='sans-serif'               
+            ),
+            tickvals=[sum(pos)/len(pos) for pos in x_positions],
+            ticktext=courses,
+            range = x_axis_range
+        ),
+        barmode='group',
+        height=325,
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=50, r=50, t=50, b=100),
+        autosize=False,
+        width=graph_width  # Dynamically adjusted width
+    )
 
-    return attendance_str
+    attendance_figure = go.Figure(data=traces, layout=layout)
 
-def create_pgt_attendance_graph(df):
-    pgt_attendance = calculate_pgt_attendance_rate(df)
+    # Create the dcc.Graph object to render in Dash
+    attendance_graph = dcc.Graph(
+        id='attendance-graph',
+        figure=attendance_figure,
+        style={
+            'border-radius': '15px',
+            'overflowX': 'auto',  # Allows horizontal scrolling if needed
+            'overflowY': 'hidden',  # Prevents vertical scrolling
+            'width': '100%',
+            'minWidth': f'{graph_width}px',  # Ensures the graph width is dynamically set
+        }
+    )
 
-    attendance_str_list = []
+    return attendance_graph
 
-    for course_year, attendance_data in pgt_attendance.items():
-        course_code, year_of_course = course_year
-        attendance_by_quarter = attendance_data['attendance_by_quarter']
-        average_attendance = attendance_data['average_attendance']
-
-        attendance_str = f"Course Code: {course_code}, Year of Course: {year_of_course}, Average Attendance: {average_attendance:.2f}%\n"
-        attendance_str_list.append(attendance_str)
-
-        for quarter, attendance in attendance_by_quarter.items():
-            attendance_str = f"    Quarter {quarter}: {attendance:.2f}%"
-            attendance_str_list.append(attendance_str)
-
-    attendance_str = "\n".join(attendance_str_list)
-
-    return attendance_str
+def create_attendance_section(df):
+    
+    return
 
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
@@ -479,16 +375,14 @@ def parse_contents(contents, filename, date):
             
             summary_section = create_summary_section(df)
             enrolment_section = create_enrolment_section(df)
-            # ug_attendance = create_ug_attendance_graph(df)
-            # pgt_attendance = create_pgt_attendance_graph(df)
+            attendance_section = create_attendance_graph(df, 'PGT', 1)
             
             return html.Div([
                 html.H5(filename),
                 html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
                 summary_section,
                 enrolment_section,
-                # ug_attendance,
-                # pgt_attendance
+                attendance_section
             ], style={'padding-left': '20px', 'padding-right': '20px', 'padding-top': '20px'})
     
     except Exception as e:

@@ -140,3 +140,6 @@ def calculate_attendance_rate(df, level_of_study, year_of_course):
             }
 
     return attendance_result
+
+def calculate_submission_rate(df):
+    return

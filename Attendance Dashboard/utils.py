@@ -235,7 +235,7 @@ def create_enrolment_section(df):
             ),
             dbc.Row(
                 dcc.Dropdown(
-                    id='student-enrolment-toggle',
+                    id='student-enrolment-dropdown',
                     options=[
                         {'label': 'UG', 'value': 'ug'},
                         {'label': 'PGT', 'value': 'pgt'}
@@ -297,7 +297,7 @@ def create_attendance_graph(df, level_of_study, year_of_course):
         current_x += (num_quarters * (bar_width + space_between_bars) - space_between_bars) + space_between_groups
 
     # Calculate dynamic width of the graph
-    graph_width = max(275, len(courses) * 80)
+    graph_width = max(275, len(courses) * 85)
 
     # Plotting
     traces = []
@@ -367,7 +367,6 @@ def create_attendance_graph(df, level_of_study, year_of_course):
         style={
             'border-radius': '15px',
             'overflowX': 'auto',  # Allows horizontal scrolling if needed
-            'overflowY': 'hidden',  # Prevents vertical scrolling
             'width': '100%',
             'maxWidth': '25.5em',  # Ensures the graph width is dynamically set
         }
@@ -387,24 +386,53 @@ def create_attendance_graph(df, level_of_study, year_of_course):
     return attendance_graph, attendance_legend
 
 def create_attendance_section(df):
-    
+
+    # return attendance_section
     attendance_graph, attendance_legend = create_attendance_graph(df, 'UG', 1)
     
-    attendance_content = html.Div(
-        [
-            html.Div(
-                attendance_legend,
-                className='attendance-legend'
-            ),
-            dbc.Col(
-                html.Div(
-                    attendance_graph,
-                    className='attendance-graph-wrapper'
-                )
-            ),
+    # Dropdown for level of study with custom styles
+    level_of_study_dropdown = dcc.Dropdown(
+        id='level-of-study-dropdown',
+        options=[
+            {'label': 'UG', 'value': 'ug'},
+            {'label': 'PGT', 'value': 'pgt'}
         ],
-        className='attendance-content'
+        value='ug',  # Default value
+        clearable=False,
+        searchable=False,
+        className='custom-dropdown',  # Apply custom CSS
+        style={'justify-content': 'start', 'align-items': 'center'}
     )
+
+    # Dropdown for year of course with custom styles
+    year_of_course_dropdown = dcc.Dropdown(
+        id='year-of-course-dropdown',
+        options=[{'label': f'Year {i}', 'value': str(i)} for i in range(0, 6)],
+        value='1',  # Default value
+        clearable=False,
+        searchable=False,
+        className='year-dropdown',  # Apply custom CSS
+        style={'justify-content': 'start', 'align-items': 'center'}
+    )
+    
+    # Combining all components
+    attendance_content = html.Div([
+        html.Div([
+            level_of_study_dropdown,
+            year_of_course_dropdown
+        ], className='dropdown-row'),
+        html.Div(
+            attendance_legend,
+            className='attendance-legend'
+        ),
+        dbc.Col(
+            html.Div(
+                attendance_graph,
+                className='attendance-graph-wrapper'
+            ),
+            width=12
+        )
+    ], className='attendance-content')
     
     attendance_section = html.Div(
         [
@@ -425,39 +453,6 @@ def create_attendance_section(df):
                 style={'display': 'block'} 
             )
         ],
-        className='attedance-container '
     )
-            
-
+    
     return attendance_section
-
-def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-
-    if not (filename.endswith('.xls') or filename.endswith('.xlsx')):
-        return html.Div(['This file type is not supported. Please upload an Excel file.'])
-
-    try:
-        if 'xls' in filename:
-            df = pd.read_excel(io.BytesIO(decoded))
-            
-            summary_section = create_summary_section(df)
-            enrolment_section = create_enrolment_section(df)
-            attendance_section = create_attendance_section(df)
-            
-            return html.Div([
-                html.H5(filename),
-                html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
-                dbc.Row([
-                    dbc.Col(summary_section, md=8),  # Use 8 out of 12 columns for the summary
-                    dbc.Col(html.Div(), md=4),  # This is to fill the space if you want to maintain the grid layout. Adjust or remove as needed.
-                ]),
-                dbc.Row([
-                    dbc.Col(html.Div(enrolment_section, className="enrolment-container"), md=3),
-                    dbc.Col(html.Div(attendance_section, className="attendance-container"), md=5)
-                ]),
-            ], style={'padding-left': '1.5em', 'padding-right': '1.5em', 'padding-top': '1.5em'})
-
-    except Exception as e:
-        return html.Div(['There was an error processing this file: {}'.format(e)])

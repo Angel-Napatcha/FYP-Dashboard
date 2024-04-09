@@ -28,18 +28,27 @@ def parse_contents(contents, filename, date):
             submission_section = create_submission_graph(df)
             
             return html.Div([
-                html.H5(filename),
-                html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
-                dbc.Row([
-                    dbc.Col(summary_section, md=8),  # Use 8 out of 12 columns for the summary
-                    dbc.Col(html.Div(), md=4),  # This is to fill the space if you want to maintain the grid layout. Adjust or remove as needed.
-                ]),
-                dbc.Row([
-                    dbc.Col(html.Div(enrolment_section, className="enrolment-container"), md=3),
-                    dbc.Col(html.Div(attendance_section, className="attendance-container"), md=5),
-                    dbc.Col(html.Div(submission_section))
-                ]),
-            ], style={'padding-left': '1em', 'padding-right': '1em', 'padding-top': '1.5em'})
-
+            html.H5(filename),
+            html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
+            dbc.Row([
+                dbc.Col(summary_section, md=8),  # Use 8 out of 12 columns for the summary
+                dbc.Col(html.Div(), md=4),  # This column acts as a space filler
+            ]),
+            dbc.Row([
+                dbc.Col(html.Div(enrolment_section, className="enrolment-container"), md=3),
+                dbc.Col(
+                    html.Div([
+                        dbc.Row([
+                            html.Div(attendance_section, className="attendance-submission-container", style={'width': '35.30em'})
+                        ]),
+                        dbc.Row([
+                            html.Div(submission_section, className="attendance-submission-container", style={'width': '35.30em'})
+                        ])
+                    ]),  # Specify width here in your CSS style
+                    md=5
+                ),
+                dbc.Col(html.Div(), md=4)  # Adjust or remove as needed.
+            ])
+        ], style={'padding-left': '1em', 'padding-right': '1em', 'padding-top': '1.5em'})
     except Exception as e:
         return html.Div(['There was an error processing this file: {}'.format(e)])

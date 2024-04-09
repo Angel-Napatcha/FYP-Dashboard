@@ -366,7 +366,7 @@ def create_attendance_graph(df, level_of_study, year_of_course):
             'border-radius': '15px',
             'overflowX': 'auto',  # Allows horizontal scrolling if needed
             'width': '100%',
-            'maxWidth': '25.5em',  # Ensures the graph width is dynamically set
+            'maxWidth': '26.2em',  # Ensures the graph width is dynamically set
         }
     )
 
@@ -451,7 +451,80 @@ def create_attendance_section(df):
     return attendance_section
 
 def create_submission_graph(df):
+    # Data preparation
     submission_rates = calculate_submission_rate(df, 'UG', 1)
-    
+    courses = [course_code for course_code in submission_rates.keys()]
+    average_submissions = [course_data['Average Submission Rate'] for course_data in submission_rates.values()]
+    bar_color = '#2F4CFF'  # Uniform color for all bars
 
+    # Constants for bar dimensions
+    bar_width = 0.25   # Wider bar for better visibility since there's only one bar per course
+
+    # Calculate x positions for each bar
+    x_positions = [i for i, _ in enumerate(courses)]
+
+    # Plotting
+    traces = []
+    for i, course in enumerate(courses):
+        traces.append(go.Bar(
+            x=[x_positions[i]],
+            y=[average_submissions[i]],
+            name=course,
+            marker_color=bar_color,
+            width=bar_width,
+            hovertemplate=f'<b>Submission Rate:</b> {average_submissions[i]:.2f}%<extra></extra>', 
+        ))
+
+    # Calculate dynamic width of the graph
+    graph_width = max(300, len(courses) * (bar_width + 65))
+
+    # Layout configuration
+    layout = go.Layout(
+        yaxis=dict(
+            title='Submission (%)',
+            titlefont=dict(
+                family='sans-serif',
+            ),
+            tickfont=dict(
+                family='sans-serif',             
+            ),
+            range=[0, 100],
+            dtick=25,
+            automargin=True 
+        ),
+        xaxis=dict(
+            tickfont=dict(
+                family='sans-serif',
+                size=12,             
+            ),
+            tickvals=x_positions,
+            ticktext=courses,
+        ),
+        barmode='group',
+        height=210,
+        showlegend=False,
+        plot_bgcolor='#F7F7F7',
+        margin=dict(l=75, r=20, t=35, b=35),
+        autosize=False,
+        width=graph_width  # Dynamically adjusted width
+    )
+
+    submission_figure = go.Figure(data=traces, layout=layout)
+
+    # Create the dcc.Graph object to render in Dash
+    submission_graph = dcc.Graph(
+        id='submission-graph',
+        figure=submission_figure,
+        style={
+            'border-radius': '15px',
+            'overflowX': 'auto',  # Allows horizontal scrolling if needed
+            'width': '100%',
+            'maxWidth': '26.2em',  # Ensures the graph width is dynamically set
+        }
+    )
+
+    return submission_graph
+
+def create_submission_section(df):
+    
     return

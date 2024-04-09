@@ -88,7 +88,7 @@
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 1em;
-    margin-bottom: 1.5em;
+    margin-bottom: 1em;
     justify-content: center; /* Center the contents */
     align-items: center; 
 }
@@ -186,6 +186,7 @@
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 0em;
+    margin-right: 0em;
     justify-content: center; /* Center the contents */
     align-items: center;
     height: 37em; /* You may adjust the height as necessary */
@@ -218,15 +219,14 @@
     align-items: flex-start;
 }
 
-.attendance-container {
+.attendance-submission-container {
     padding: 1em;
     background-color: #e4e7f5; 
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 0em;
-    margin-bottom: 1.5em;
+    margin-bottom: 1em;
     justify-content: center; /* Center the contents */
     align-items: center;
     height: 18em; /* You may adjust the height as necessary */
 }
-

@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 import base64
 import pandas as pd
-from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate
+from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate, calculate_submission_rate
 
 def save_file(name, content):
     """Decode and store a file uploaded with Plotly Dash."""
@@ -271,12 +271,12 @@ def create_enrolment_section(df):
 
 def create_attendance_graph(df, level_of_study, year_of_course):
     # Data preparation
-    attendance = calculate_attendance_rate(df, level_of_study, year_of_course)
-    courses = [course_code[0] for course_code in attendance.keys()]
+    attendance_rates = calculate_attendance_rate(df, level_of_study, year_of_course)
+    courses = [course_code[0] for course_code in attendance_rates.keys()]
     quarters = ['Week 1-3', 'Week 4-6', 'Week 6-9', 'Week 9-12']
     num_quarters = len(quarters)
-    y_data = [list(course_data['attendance_by_quarter'].values()) for course_data in attendance.values()]
-    average_attendance = [course_data['average_attendance'] for course_data in attendance.values()]
+    y_data = [list(course_data['attendance_by_quarter'].values()) for course_data in attendance_rates.values()]
+    average_attendance = [course_data['average_attendance'] for course_data in attendance_rates.values()]
     colors = ['#7252A7', '#9099FF', '#6EB1FF', '#9CDBFF']
 
     # Constants for bar dimensions and spacing
@@ -385,8 +385,9 @@ def create_attendance_section(df):
         for year in years_of_course[level]:
             graph_id = f'{level.lower()}-year-{year}'
             attendance_graph = create_attendance_graph(df, level, year)
-            # Each graph and its legend are placed in separate columns
+            # Each graph is placed in separate columns
             graph_containers[graph_id] = html.Div(attendance_graph, id=graph_id, style={'display': 'none'})
+    
     # Dropdowns for selecting level of study and year of course
     level_of_study_dropdown = dcc.Dropdown(
         id='level-of-study-dropdown',
@@ -400,7 +401,7 @@ def create_attendance_section(df):
     year_of_course_dropdown = dcc.Dropdown(
         id='year-of-course-dropdown',
         options=[],  # Options will be set by callback based on selected level of study
-        value='1',
+        value=None,
         clearable=False,
         searchable=False,
         className='year-dropdown'
@@ -448,3 +449,9 @@ def create_attendance_section(df):
     ])
 
     return attendance_section
+
+def create_submission_graph(df):
+    submission_rates = calculate_submission_rate(df, 'UG', 1)
+    
+
+    return

@@ -117,10 +117,10 @@ def calculate_attendance_rate(df, level_of_study, year_of_course):
     df = df.dropna(subset=['% Attendance', 'Year of Course', 'Quarter'])
 
     # Filter the data frame based on the provided level_of_study and year_of_course
-    students = df[(df['Level of Study'] == level_of_study) & (df['Year of Course'] == year_of_course)]
+    filtered_df = df[(df['Level of Study'] == level_of_study) & (df['Year of Course'] == year_of_course)]
 
     attendance_result = {}
-    for course_code, group in students.groupby(['Course Code', 'Year of Course']):
+    for course_code, group in filtered_df.groupby(['Course Code', 'Year of Course']):
         course_attendance = group.pivot_table(
             index='Quarter',
             values='% Attendance',
@@ -141,5 +141,33 @@ def calculate_attendance_rate(df, level_of_study, year_of_course):
 
     return attendance_result
 
-def calculate_submission_rate(df):
-    return
+def calculate_submission_rate(df, level_of_study, year_of_course):
+    required_columns = ['Submitted', 'Assessments', 'Level of Study', 'Year of Course', 'Course Code', 'Quarter']
+    for column in required_columns:
+        if column not in df.columns:
+            raise ValueError("Missing required column: {}".format(column))
+
+    # Ensure that the columns are in the correct format
+    df['Submitted'] = pd.to_numeric(df['Submitted'], errors='coerce')
+    df['Assessments'] = pd.to_numeric(df['Assessments'], errors='coerce')
+    df['Year of Course'] = pd.to_numeric(df['Year of Course'], errors='coerce')
+    df['Quarter'] = pd.to_numeric(df['Quarter'], errors='coerce')
+
+    # Drop rows with NaN values that were created due to coercion errors
+    df = df.dropna(subset=['Submitted', 'Assessments', 'Year of Course', 'Quarter'])
+
+    # Filter the data frame based on the provided level_of_study and year_of_course
+    filtered_df = df[(df['Level of Study'] == level_of_study) & (df['Year of Course'] == year_of_course)]
+    
+    submission_result = {}
+    for course_code, group in filtered_df.groupby('Course Code'):
+        total_submissions = group['Submitted'].sum()
+        total_assessments = group['Assessments'].sum()
+        average_submission_rate = (total_submissions / total_assessments * 100) if total_assessments > 0 else 0
+        submission_result[course_code] = {
+            'Course Code': course_code,
+            'Year of Course': year_of_course,
+            'Average Submission Rate': round(average_submission_rate, 2)  # rounding to 2 decimal places for neatness
+        }
+    
+    return submission_result

@@ -1,7 +1,7 @@
 from dash.dependencies import Input, Output, State
 from dash import html, no_update, dcc
 import dash_bootstrap_components as dbc
-from utils import save_file, create_attendance_graph
+from sections import save_file
 from parse_contents import parse_contents
 import pandas as pd
 
@@ -37,19 +37,6 @@ def register_callbacks(app):
         # If no files are uploaded, don't update the upload interface or the loading state
         return [], {'display': 'none'}, no_update
     
-    # @app.callback(
-    #     Output('stored-data', 'data'),
-    #     [Input('upload-data', 'contents')],
-    #     [State('upload-data', 'filename')]
-    # )
-    # def handle_upload(contents, filename):
-    #     if contents is not None:
-    #         # Assuming you're saving the file and want to pass its filename to the store
-    #         path = save_file(filename, contents)  # You'll define how to save the file
-    #         return path  # Return the path or filename for the dcc.Store
-
-    #     return no_update 
-    
     @app.callback(
         [Output('ug-enrolment-content', 'style'),
          Output('pgt-enrolment-content', 'style')],
@@ -73,24 +60,28 @@ def register_callbacks(app):
         elif level_of_study == 'pgt':
             return [{'label': f'Year {i}', 'value': str(i)} for i in range(1, 3)]
     
-    # @app.callback(
-    # [Output('attendance-graph', 'figure'),
-    #  Output('attendance-legend-placeholder', 'children')],
-    # [Input('level-of-study-dropdown', 'value'),
-    #  Input('year-of-course-dropdown', 'value'),
-    #  Input('stored-data', 'data')]  # This is assuming you store the uploaded data in 'stored-data'
-    # )
-    # def update_attendance_graph(level_of_study, year_of_course, stored_data):
-    #     # Here you will need to retrieve your DataFrame using the stored data
-    #     # For example, if stored_data is the filename:
-    #     df = pd.read_excel(stored_data)
-
-    #     # Convert the year of course to integer
-    #     year_of_course = int(year_of_course)
-
-    #     # Now call your function to create the graph and legend
-    #     attendance_graph, attendance_legend = create_attendance_graph(df, level_of_study, year_of_course)
+    years_of_course = {
+        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
+        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+    }
+    
+    @app.callback(
+    [Output(f'{level.lower()}-year-{year}', 'style') for level in ['UG', 'PGT'] for year in years_of_course[level]],
+    Input('level-of-study-dropdown', 'value'),
+    Input('year-of-course-dropdown', 'value')
+    )
+    def show_graph(level_of_study, year_of_course):
         
-    #     # Return the updated figure and legend
-    #     return attendance_graph, attendance_legend
+        visibility = {}
+        for level in ['UG', 'PGT']:
+            for year in years_of_course[level]:
+                element_id = f'{level.lower()}-year-{year}'
+                if level.lower() == level_of_study and str(year) == str(year_of_course):
+                    visibility[element_id] = {'display': 'block'}
+                else:
+                    visibility[element_id] = {'display': 'none'}
+
+        # Generate the output list with the correct length
+        output = [visibility.get(f'{level.lower()}-year-{year}', {'display': 'none'}) for level in ['UG', 'PGT'] for year in years_of_course[level]]
+        return output
     

@@ -3,9 +3,7 @@ from dash import dcc, html
 import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 import base64
-import io
 import pandas as pd
-import datetime
 from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate
 
 def save_file(name, content):
@@ -297,7 +295,7 @@ def create_attendance_graph(df, level_of_study, year_of_course):
         current_x += (num_quarters * (bar_width + space_between_bars) - space_between_bars) + space_between_groups
 
     # Calculate dynamic width of the graph
-    graph_width = max(275, len(courses) * 85)
+    graph_width = max(325, len(courses) * 85)
 
     # Plotting
     traces = []
@@ -371,6 +369,45 @@ def create_attendance_graph(df, level_of_study, year_of_course):
             'maxWidth': '25.5em',  # Ensures the graph width is dynamically set
         }
     )
+
+    return attendance_graph
+
+def create_attendance_section(df):
+    levels_of_study = ['UG', 'PGT']
+    years_of_course = {
+        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
+        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+    }
+
+    # Prepare graph containers by level and year
+    graph_containers = {}
+    for level in levels_of_study:
+        for year in years_of_course[level]:
+            graph_id = f'{level.lower()}-year-{year}'
+            attendance_graph = create_attendance_graph(df, level, year)
+            # Each graph and its legend are placed in separate columns
+            graph_containers[graph_id] = html.Div(attendance_graph, id=graph_id, style={'display': 'none'})
+    # Dropdowns for selecting level of study and year of course
+    level_of_study_dropdown = dcc.Dropdown(
+        id='level-of-study-dropdown',
+        options=[{'label': level, 'value': level.lower()} for level in levels_of_study],
+        value='ug',
+        clearable=False,
+        searchable=False,
+        className='custom-dropdown'
+    )
+
+    year_of_course_dropdown = dcc.Dropdown(
+        id='year-of-course-dropdown',
+        options=[],  # Options will be set by callback based on selected level of study
+        value='1',
+        clearable=False,
+        searchable=False,
+        className='year-dropdown'
+    )
+   
+    colors = ['#7252A7', '#9099FF', '#6EB1FF', '#9CDBFF']
+    num_quarters = 4
     
     attendance_legend = html.Div(
         [html.Div(
@@ -382,40 +419,8 @@ def create_attendance_graph(df, level_of_study, year_of_course):
         ) for i in range(num_quarters)],
         className='legend-column'
     )
-
-    return attendance_graph, attendance_legend
-
-def create_attendance_section(df):
-
-    # return attendance_section
-    attendance_graph, attendance_legend = create_attendance_graph(df, 'UG', 1)
     
-    # Dropdown for level of study with custom styles
-    level_of_study_dropdown = dcc.Dropdown(
-        id='level-of-study-dropdown',
-        options=[
-            {'label': 'UG', 'value': 'ug'},
-            {'label': 'PGT', 'value': 'pgt'}
-        ],
-        value='ug',  # Default value
-        clearable=False,
-        searchable=False,
-        className='custom-dropdown',  # Apply custom CSS
-        style={'justify-content': 'start', 'align-items': 'center'}
-    )
-
-    # Dropdown for year of course with custom styles
-    year_of_course_dropdown = dcc.Dropdown(
-        id='year-of-course-dropdown',
-        options=[{'label': f'Year {i}', 'value': str(i)} for i in range(0, 6)],
-        value='1',  # Default value
-        clearable=False,
-        searchable=False,
-        className='year-dropdown',  # Apply custom CSS
-        style={'justify-content': 'start', 'align-items': 'center'}
-    )
-    
-    # Combining all components
+    # Combining all components into the content section
     attendance_content = html.Div([
         html.Div([
             level_of_study_dropdown,
@@ -427,32 +432,19 @@ def create_attendance_section(df):
         ),
         dbc.Col(
             html.Div(
-                attendance_graph,
+                list(graph_containers.values()),
                 className='attendance-graph-wrapper'
             ),
             width=12
         )
     ], className='attendance-content')
     
-    attendance_section = html.Div(
-        [
-            dbc.Row(
-                html.H6("Student Attendance", style={
-                    'text-align': 'left',
-                    'margin-bottom': '1em',
-                    'margin-top': '0.5em'
-                }),
-                justify="start",
-                align="center"
-            ),
-            html.Div(
-                [
-                   attendance_content
-                ],
-                id='attendance-content', 
-                style={'display': 'block'} 
-            )
-        ],
-    )
-    
+    # Overall section including the header
+    attendance_section = html.Div([
+        dbc.Row(html.H6("Student Attendance", style={
+            'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
+        }), justify="start", align="center"),
+        attendance_content
+    ])
+
     return attendance_section

@@ -127,6 +127,12 @@
     align-items: center;
 }
 
+.custom-dropdown .Select-placeholder {
+    font-size: 0.5em; /* Smaller font size for placeholder */
+    line-height: 100px; /* Adjusted to match the height of the dropdown */
+    color: #ADB5BD; /* Lighter color for placeholder text */
+}
+
 .custom-dropdown .Select-value,
 .custom-dropdown .Select-value-label {
     font-size: 0.9em;
@@ -151,6 +157,12 @@
     height: 35px;
     display: flex;
     align-items: center;
+}
+
+.year-dropdown .Select-placeholder {
+    font-size: 0.9em; /* Smaller font size for placeholder */
+    line-height: -20px; /* Adjusted to match the height of the dropdown */
+    color: #a8abaf; /* Lighter color for placeholder text */
 }
 
 .year-dropdown .Select-value,

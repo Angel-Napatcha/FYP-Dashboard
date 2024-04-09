@@ -6,7 +6,7 @@ import base64
 import io
 import pandas as pd
 import datetime
-from utils import create_summary_section, create_enrolment_section, create_attendance_section
+from sections import create_summary_section, create_enrolment_section, create_attendance_section
 
 def parse_contents(contents, filename, date):
     if contents is None or filename is None or date is None:
@@ -37,7 +37,7 @@ def parse_contents(contents, filename, date):
                     dbc.Col(html.Div(enrolment_section, className="enrolment-container"), md=3),
                     dbc.Col(html.Div(attendance_section, className="attendance-container"), md=5)
                 ]),
-            ], style={'padding-left': '1.5em', 'padding-right': '1.5em', 'padding-top': '1.5em'})
+            ], style={'padding-left': '1em', 'padding-right': '1em', 'padding-top': '1.5em'})
 
     except Exception as e:
         return html.Div(['There was an error processing this file: {}'.format(e)])

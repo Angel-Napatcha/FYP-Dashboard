@@ -6,7 +6,7 @@ import base64
 import io
 import pandas as pd
 import datetime
-from sections import create_summary_section, create_enrolment_section, create_attendance_section, create_submission_graph
+from sections import create_summary_section, create_enrolment_section, create_attendance_section, create_submission_section
 
 def parse_contents(contents, filename, date):
     if contents is None or filename is None or date is None:
@@ -25,7 +25,7 @@ def parse_contents(contents, filename, date):
             summary_section = create_summary_section(df)
             enrolment_section = create_enrolment_section(df)
             attendance_section = create_attendance_section(df)
-            submission_section = create_submission_graph(df)
+            submission_section = create_submission_section(df)
             
             return html.Div([
             html.H5(filename),
@@ -39,10 +39,10 @@ def parse_contents(contents, filename, date):
                 dbc.Col(
                     html.Div([
                         dbc.Row([
-                            html.Div(attendance_section, className="attendance-submission-container", style={'width': '35.30em'})
+                            html.Div(attendance_section, className="attendance-submission-container", style={'width': '35.25em'})
                         ]),
                         dbc.Row([
-                            html.Div(submission_section, className="attendance-submission-container", style={'width': '35.30em'})
+                            html.Div(submission_section, className="attendance-submission-container", style={'width': '35.25em'})
                         ])
                     ]),  # Specify width here in your CSS style
                     md=5

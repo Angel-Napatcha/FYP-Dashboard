@@ -1,9 +1,7 @@
 from dash.dependencies import Input, Output, State
-from dash import html, no_update, dcc
-import dash_bootstrap_components as dbc
+from dash import html, no_update
 from sections import save_file
 from parse_contents import parse_contents
-import pandas as pd
 
 def register_callbacks(app):
     @app.callback(
@@ -51,8 +49,8 @@ def register_callbacks(app):
             return no_update, no_update
         
     @app.callback(
-    Output('year-of-course-dropdown', 'options'),
-    Input('level-of-study-dropdown', 'value')
+    Output('attendance-year-of-course-dropdown', 'options'),
+    Input('attendance-level-of-study-dropdown', 'value')
     )
     def set_year_options(level_of_study):
         if level_of_study == 'ug':
@@ -66,22 +64,56 @@ def register_callbacks(app):
     }
     
     @app.callback(
-    [Output(f'{level.lower()}-year-{year}', 'style') for level in ['UG', 'PGT'] for year in years_of_course[level]],
-    Input('level-of-study-dropdown', 'value'),
-    Input('year-of-course-dropdown', 'value')
+    [Output(f'{level.lower()}-year-{year}-attendance', 'style') for level in ['UG', 'PGT'] for year in years_of_course[level]],
+    Input('attendance-level-of-study-dropdown', 'value'),
+    Input('attendance-year-of-course-dropdown', 'value')
     )
-    def show_graph(level_of_study, year_of_course):
+    def show_attendance_graph(level_of_study, year_of_course):
         
         visibility = {}
         for level in ['UG', 'PGT']:
             for year in years_of_course[level]:
-                element_id = f'{level.lower()}-year-{year}'
+                element_id = f'{level.lower()}-year-{year}-attendance'
                 if level.lower() == level_of_study and str(year) == str(year_of_course):
                     visibility[element_id] = {'display': 'block'}
                 else:
                     visibility[element_id] = {'display': 'none'}
 
         # Generate the output list with the correct length
-        output = [visibility.get(f'{level.lower()}-year-{year}', {'display': 'none'}) for level in ['UG', 'PGT'] for year in years_of_course[level]]
+        output = [visibility.get(f'{level.lower()}-year-{year}-attendance', {'display': 'none'}) for level in ['UG', 'PGT'] for year in years_of_course[level]]
         return output
     
+    @app.callback(
+    Output('submission-year-of-course-dropdown', 'options'),
+    Input('submission-level-of-study-dropdown', 'value')
+    )
+    def set_year_options(level_of_study):
+        if level_of_study == 'ug':
+            return [{'label': f'Year {i}', 'value': str(i)} for i in range(0, 6)]
+        elif level_of_study == 'pgt':
+            return [{'label': f'Year {i}', 'value': str(i)} for i in range(1, 3)]
+    
+    years_of_course = {
+        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
+        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+    }
+    
+    @app.callback(
+    [Output(f'{level.lower()}-year-{year}-submission', 'style') for level in ['UG', 'PGT'] for year in years_of_course[level]],
+    Input('submission-level-of-study-dropdown', 'value'),
+    Input('submission-year-of-course-dropdown', 'value')
+    )
+    def show_submission_graph(level_of_study, year_of_course):
+        
+        visibility = {}
+        for level in ['UG', 'PGT']:
+            for year in years_of_course[level]:
+                element_id = f'{level.lower()}-year-{year}-submission'
+                if level.lower() == level_of_study and str(year) == str(year_of_course):
+                    visibility[element_id] = {'display': 'block'}
+                else:
+                    visibility[element_id] = {'display': 'none'}
+
+        # Generate the output list with the correct length
+        output = [visibility.get(f'{level.lower()}-year-{year}-submission', {'display': 'none'}) for level in ['UG', 'PGT'] for year in years_of_course[level]]
+        return output

@@ -223,7 +223,7 @@ def create_enrolment_section(df):
     enrolment_section = html.Div(
         [
             dbc.Row(
-                html.H6("Student Enrolment", style={
+                html.H6("Students Enrolment", style={
                     'text-align': 'left',
                     'margin-bottom': '1em',
                     'margin-top': '0.5em'
@@ -366,7 +366,7 @@ def create_attendance_graph(df, level_of_study, year_of_course):
             'border-radius': '15px',
             'overflowX': 'auto',  # Allows horizontal scrolling if needed
             'width': '100%',
-            'maxWidth': '26.2em',  # Ensures the graph width is dynamically set
+            'maxWidth': '26.15em',  # Ensures the graph width is dynamically set
         }
     )
 
@@ -383,25 +383,24 @@ def create_attendance_section(df):
     graph_containers = {}
     for level in levels_of_study:
         for year in years_of_course[level]:
-            graph_id = f'{level.lower()}-year-{year}'
+            graph_id = f'{level.lower()}-year-{year}-attendance'
             attendance_graph = create_attendance_graph(df, level, year)
             # Each graph is placed in separate columns
             graph_containers[graph_id] = html.Div(attendance_graph, id=graph_id, style={'display': 'none'})
     
     # Dropdowns for selecting level of study and year of course
     level_of_study_dropdown = dcc.Dropdown(
-        id='level-of-study-dropdown',
+        id='attendance-level-of-study-dropdown',
         options=[{'label': level, 'value': level.lower()} for level in levels_of_study],
         value='ug',
         clearable=False,
         searchable=False,
-        className='custom-dropdown'
+        className='custom-dropdown',
     )
 
     year_of_course_dropdown = dcc.Dropdown(
-        id='year-of-course-dropdown',
+        id='attendance-year-of-course-dropdown',
         options=[],  # Options will be set by callback based on selected level of study
-        value=None,
         clearable=False,
         searchable=False,
         className='year-dropdown'
@@ -434,15 +433,15 @@ def create_attendance_section(df):
         dbc.Col(
             html.Div(
                 list(graph_containers.values()),
-                className='attendance-graph-wrapper'
+                className='attendance-submission-graph-wrapper'
             ),
             width=12
         )
-    ], className='attendance-content')
+    ], className='attendance-submission-content')
     
     # Overall section including the header
     attendance_section = html.Div([
-        dbc.Row(html.H6("Student Attendance", style={
+        dbc.Row(html.H6("Attendance Rates", style={
             'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
         }), justify="start", align="center"),
         attendance_content
@@ -450,9 +449,9 @@ def create_attendance_section(df):
 
     return attendance_section
 
-def create_submission_graph(df):
+def create_submission_graph(df, level_of_study, year_of_course):
     # Data preparation
-    submission_rates = calculate_submission_rate(df, 'UG', 1)
+    submission_rates = calculate_submission_rate(df, level_of_study, year_of_course)
     courses = [course_code for course_code in submission_rates.keys()]
     average_submissions = [course_data['Average Submission Rate'] for course_data in submission_rates.values()]
     bar_color = '#2F4CFF'  # Uniform color for all bars
@@ -519,12 +518,67 @@ def create_submission_graph(df):
             'border-radius': '15px',
             'overflowX': 'auto',  # Allows horizontal scrolling if needed
             'width': '100%',
-            'maxWidth': '26.2em',  # Ensures the graph width is dynamically set
+            'maxWidth': '26.15em',  # Ensures the graph width is dynamically set
         }
     )
 
     return submission_graph
 
 def create_submission_section(df):
+    levels_of_study = ['UG', 'PGT']
+    years_of_course = {
+        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
+        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+    }
+
+    # Prepare graph containers by level and year
+    graph_containers = {}
+    for level in levels_of_study:
+        for year in years_of_course[level]:
+            graph_id = f'{level.lower()}-year-{year}-submission'
+            submission_graph = create_submission_graph(df, level, year)
+            # Each graph is placed in separate columns
+            graph_containers[graph_id] = html.Div(submission_graph, id=graph_id, style={'display': 'none'})
     
-    return
+    # Dropdowns for selecting level of study and year of course
+    level_of_study_dropdown = dcc.Dropdown(
+        id='submission-level-of-study-dropdown',
+        options=[{'label': level, 'value': level.lower()} for level in levels_of_study],
+        value='ug',
+        clearable=False,
+        searchable=False,
+        className='custom-dropdown'
+    )
+
+    year_of_course_dropdown = dcc.Dropdown(
+        id='submission-year-of-course-dropdown',
+        options=[],  # Options will be set by callback based on selected level of study
+        value=None,
+        clearable=False,
+        searchable=False,
+        className='year-dropdown'
+    )
+    
+    submission_content = html.Div([
+        html.Div([
+            level_of_study_dropdown,
+            year_of_course_dropdown
+        ], className='dropdown-row'),
+        dbc.Col(
+            html.Div(
+                list(graph_containers.values()),
+                className='attendance-submission-graph-wrapper'
+            ),
+            width=12
+        )
+    ], className='attendance-submission-content')
+    
+    # Overall section including the header
+    submission_section = html.Div([
+        dbc.Row(html.H6("Submission Rates", style={
+            'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
+        }), justify="start", align="center"),
+        submission_content
+    ])
+    
+    return submission_section

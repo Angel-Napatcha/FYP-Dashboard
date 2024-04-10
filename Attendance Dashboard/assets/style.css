@@ -140,14 +140,13 @@
 }
 
 .custom-dropdown .Select-arrow-zone {
-    padding-left: 20px;
+    padding-left: 1.4em;
     padding-right: 0px;
 }
 
 .custom-dropdown .Select-clear-zone {
     display: none;
 }
-
 /* year of course */
 .year-dropdown .Select-control {
     background-color: #2f4bff3f;
@@ -157,6 +156,7 @@
     height: 35px;
     display: flex;
     align-items: center;
+    margin-right: 1.9em;
 }
 
 .year-dropdown .Select-placeholder {
@@ -186,7 +186,7 @@
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 0em;
-    margin-right: 0em;
+    margin-right: 0.2em;
     justify-content: center; /* Center the contents */
     align-items: center;
     height: 37em; /* You may adjust the height as necessary */
@@ -202,18 +202,18 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    margin-right: 1.5em;
-    margin-left: -5em;
+    margin-right: 1.4em;
+    margin-left: -6.9em;
     margin-top: 6.75em;
     white-space: nowrap;
 }
 
-.attendance-graph-wrapper {
+.attendance-submission-graph-wrapper {
     display: flex;
     justify-content: flex-start;
 }
 
-.attendance-content {
+.attendance-submission-content {
     display: flex;
     flex-wrap: nowrap;
     align-items: flex-start;

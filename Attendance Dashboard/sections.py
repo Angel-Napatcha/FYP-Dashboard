@@ -553,7 +553,7 @@ def create_submission_section(df):
     year_of_course_dropdown = dcc.Dropdown(
         id='submission-year-of-course-dropdown',
         options=[],  # Options will be set by callback based on selected level of study
-        value=None,
+        value='1',
         clearable=False,
         searchable=False,
         className='year-dropdown'

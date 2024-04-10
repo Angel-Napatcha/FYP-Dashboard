@@ -47,21 +47,26 @@ def register_callbacks(app):
             return {'display': 'none'}, {'display': 'block'}
         else:
             return no_update, no_update
-        
+    
+    years_of_course = {
+            'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
+            'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+        }
+    
     @app.callback(
-    Output('attendance-year-of-course-dropdown', 'options'),
+    Output('attendance-year-of-course-dropdown', 'options'),  # for the dropdown options
+    Output('attendance-year-of-course-dropdown', 'value'),  
     Input('attendance-level-of-study-dropdown', 'value')
     )
     def set_year_options(level_of_study):
         if level_of_study == 'ug':
-            return [{'label': f'Year {i}', 'value': str(i)} for i in range(0, 6)]
+            year_options = [{'label': f'Year {i}', 'value': str(i)} for i in years_of_course['UG']]
+            default_year = '1'  # Set the default year to '0' for UG
         elif level_of_study == 'pgt':
-            return [{'label': f'Year {i}', 'value': str(i)} for i in range(1, 3)]
-    
-    years_of_course = {
-        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
-        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
-    }
+            year_options = [{'label': f'Year {i}', 'value': str(i)} for i in years_of_course['PGT']]
+            default_year = '1'  # Set the default year to '1' for PGT
+
+        return year_options, default_year
     
     @app.callback(
     [Output(f'{level.lower()}-year-{year}-attendance', 'style') for level in ['UG', 'PGT'] for year in years_of_course[level]],
@@ -69,7 +74,6 @@ def register_callbacks(app):
     Input('attendance-year-of-course-dropdown', 'value')
     )
     def show_attendance_graph(level_of_study, year_of_course):
-        
         visibility = {}
         for level in ['UG', 'PGT']:
             for year in years_of_course[level]:
@@ -84,19 +88,24 @@ def register_callbacks(app):
         return output
     
     @app.callback(
-    Output('submission-year-of-course-dropdown', 'options'),
+    Output('submission-year-of-course-dropdown', 'options'),  # for the dropdown options
+    Output('submission-year-of-course-dropdown', 'value'),  
     Input('submission-level-of-study-dropdown', 'value')
     )
     def set_year_options(level_of_study):
+        years_of_course = {
+            'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
+            'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+        }
+            
         if level_of_study == 'ug':
-            return [{'label': f'Year {i}', 'value': str(i)} for i in range(0, 6)]
+            year_options = [{'label': f'Year {i}', 'value': str(i)} for i in years_of_course['UG']]
+            default_year = '1'  # Set the default year to '0' for UG
         elif level_of_study == 'pgt':
-            return [{'label': f'Year {i}', 'value': str(i)} for i in range(1, 3)]
-    
-    years_of_course = {
-        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
-        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
-    }
+            year_options = [{'label': f'Year {i}', 'value': str(i)} for i in years_of_course['PGT']]
+            default_year = '1'  # Set the default year to '1' for PGT
+
+        return year_options, default_year
     
     @app.callback(
     [Output(f'{level.lower()}-year-{year}-submission', 'style') for level in ['UG', 'PGT'] for year in years_of_course[level]],
@@ -104,7 +113,6 @@ def register_callbacks(app):
     Input('submission-year-of-course-dropdown', 'value')
     )
     def show_submission_graph(level_of_study, year_of_course):
-        
         visibility = {}
         for level in ['UG', 'PGT']:
             for year in years_of_course[level]:

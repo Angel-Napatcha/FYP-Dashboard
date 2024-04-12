@@ -186,10 +186,10 @@
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 0em;
-    margin-right: 0.2em;
+    margin-right: -0.5em;
     justify-content: center; /* Center the contents */
     align-items: center;
-    height: 37em; /* You may adjust the height as necessary */
+    /* height: 37em; You may adjust the height as necessary */
 }
 
 .dropdown-row {
@@ -226,7 +226,48 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 0em;
     margin-bottom: 1em;
+    width: 35.25em;
+    /* justify-content: center; /* Center the contents */
+    /* align-items: center; */ 
+    /* height: 18em; You may adjust the height as necessary */
+}
+
+/* DataTable specific styles */
+.at-risk-table {
+    text-align: center;
+    background-color: #FFF;
+    border: none;
+    border-collapse: separate; /* Separates the border of each cell */
+    border-spacing: 0; /* Removes spacing between borders */
+    width: 100%; /* Adjust width as needed */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1em; /* Adjust if needed */
+}
+
+.at-risk-table th,
+.at-risk-table td {
+    padding: 10px;
+    background-color: #FFF;
+    border-bottom: 1px solid #f4f4f4; /* Styling for the bottom border of each cell */
+}
+
+.at-risk-table th {
+    font-weight: bold;
+    background-color: #f4f4f4;
+}
+
+.at-risk-table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9; /* For zebra striping */
+}
+
+.risk-container {
+    padding: 1em;
+    background-color: #e4e7f5; 
+    border-radius: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    margin-top: 1em;
+    margin-left: -0.5em;
     justify-content: center; /* Center the contents */
     align-items: center;
-    height: 18em; /* You may adjust the height as necessary */
+    /* height: 50em; You may adjust the height as necessary */
 }

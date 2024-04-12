@@ -1,10 +1,11 @@
 import os
-from dash import dcc, html
+from dash import dcc, html, dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 import base64
 import pandas as pd
 from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate, calculate_submission_rate
+from ml_model import detect_students_at_risk
 
 def save_file(name, content):
     """Decode and store a file uploaded with Plotly Dash."""
@@ -265,7 +266,8 @@ def create_enrolment_section(df):
                 id='pgt-enrolment-content', 
                 style={'display': 'none'} 
             )
-        ]
+        ],
+        className='enrolment-container'
     )
     return enrolment_section
 
@@ -310,16 +312,30 @@ def create_attendance_graph(df, level_of_study, year_of_course):
                 hovertemplate=f'<b>Week:</b> {quarter}<br><b>Attendance Rate:</b> {y_data[i][j]:.2f}%<extra></extra>', 
             ))
 
-    # Line chart for average attendance
+    # Add markers for average attendance (the lollipop heads)
     traces.append(go.Scatter(
-        x=[sum(pos)/len(pos) for pos in x_positions],
+        x=[sum(pos) / len(pos) for pos in x_positions],
         y=average_attendance,
-        mode='lines+markers',
-        name='Average Attendance',
-        marker=dict(color='#FFA41B', size=8),
-        line=dict(color='#FFA41B'),
-        hovertemplate='<b>Average Attendance:</b> %{y:.2f}%<extra></extra>',
+        name= '',
+        mode='markers',
+        marker=dict(color='#FFA41B', size=10, symbol='circle'),
+        hovertemplate='<b>Average Attendance Rate:</b> %{y:.2f}%',
+        showlegend=False
     ))
+
+    # Add sticks for the lollipop chart (vertical lines)
+    for i, avg in enumerate(average_attendance):
+        # Calculate the start and end x-positions for the stick
+        x_pos = sum(x_positions[i]) / len(x_positions[i])
+        traces.append(go.Scatter(
+            x=[x_pos, x_pos],
+            y=[0, avg],
+            mode='lines',
+            marker=dict(color='#FFA41B'),
+            showlegend=False,
+            hoverinfo='skip',
+            hovertemplate=None
+        ))
     
     # Calculate dynamic range for x-axis
     x_axis_range = [min(x_positions[0]) - bar_width - 0.1, max(x_positions[-1]) + bar_width]
@@ -439,12 +455,13 @@ def create_attendance_section(df):
         )
     ], className='attendance-submission-content')
     
-    # Overall section including the header
     attendance_section = html.Div([
-        dbc.Row(html.H6("Attendance Rates", style={
-            'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
-        }), justify="start", align="center"),
-        attendance_content
+        html.Div([
+            dbc.Row(html.H6("Attendance Rates", style={
+                'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
+            }), justify="start", align="center"),
+            attendance_content
+        ], className='attendance-submission-container')
     ])
 
     return attendance_section
@@ -575,10 +592,74 @@ def create_submission_section(df):
     
     # Overall section including the header
     submission_section = html.Div([
-        dbc.Row(html.H6("Submission Rates", style={
-            'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
-        }), justify="start", align="center"),
-        submission_content
+        html.Div([
+            dbc.Row(html.H6("Submission Rates", style={
+                'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
+            }), justify="start", align="center"),
+            submission_content
+        ], className='attendance-submission-container')  # Add the same class as attendance-section
+    ])
+        
+    return submission_section
+
+def create_ug_students_at_risk_list(df, level_of_study, year_of_course, course_code):
+    students_at_risk = detect_students_at_risk(df, level_of_study, year_of_course, course_code)
+    
+    if not students_at_risk.empty:
+        # Wrap the DataTable in a Div and assign the class to the Div
+        return html.Div(
+            dash_table.DataTable(
+                data=students_at_risk.to_dict('records'),
+                columns=[
+                    {'name': 'User', 'id': 'User'},
+                    {'name': 'Attendance Rate', 'id': '% Attendance'},
+                    {'name': 'Submission Rate', 'id': 'Submission Rate'},
+                ],
+                # The inline styles can be moved to CSS if you've defined them there
+                style_cell={
+                    'textAlign': 'center',
+                    'padding': '10px',
+                    'backgroundColor': '#FFF',
+                    'border': 'none',
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                    'backgroundColor': '#f4f4f4',
+                },
+                style_data_conditional=[
+                    {'if': {'row_index': 'odd'}, 'backgroundColor': '#f9f9f9'}
+                ],
+                style_as_list_view=True,
+            ),
+            className='at-risk-table'  # Assign the CSS class to the Div
+        )
+    else:
+        return html.Div("No at-risk students found for the given criteria.", style={'textAlign': 'center'})
+    
+    
+def create_at_risk_section(df):
+    students_at_risk_list = create_ug_students_at_risk_list(df, 'UG', 3, 'H3002U')
+    
+    risk_content = html.Div([
+        # html.Div([
+        #     level_of_study_dropdown,
+        #     year_of_course_dropdown
+        # ], className='dropdown-row'),
+        dbc.Col(
+            html.Div(
+               students_at_risk_list
+            ),
+            width=12
+        )
+    ], className='attendance-submission-content')
+    
+    risk_section = html.Div([
+        html.Div([
+            dbc.Row(html.H6('Students At Risk', style={
+                'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
+            }), justify="start", align="center"),
+            risk_content
+        ], className='risk-container')  # Add the risk-container class here
     ])
     
-    return submission_section
+    return risk_section

@@ -17,8 +17,8 @@ def calculate_summary_statistics(df):
     df = df.dropna(subset=['% Attendance', 'Submitted', 'Assessments', 'Quarter'])
 
     # Total Students
-    students_q4 = df[df['Quarter'] == 4]
-    total_students = students_q4['User'].nunique()
+    current_students = df[df['Quarter'] == 4]
+    total_students = current_students['User'].nunique()
 
     #Average Attendance
     average_attendance = df['% Attendance'].mean() * 100  # Convert to percentage

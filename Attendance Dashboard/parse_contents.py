@@ -6,7 +6,7 @@ import base64
 import io
 import pandas as pd
 import datetime
-from sections import create_summary_section, create_enrolment_section, create_attendance_section, create_submission_section
+from sections import create_summary_section, create_enrolment_section, create_attendance_section, create_submission_section, create_at_risk_section
 
 def parse_contents(contents, filename, date):
     if contents is None or filename is None or date is None:
@@ -26,29 +26,28 @@ def parse_contents(contents, filename, date):
             enrolment_section = create_enrolment_section(df)
             attendance_section = create_attendance_section(df)
             submission_section = create_submission_section(df)
+            risk_list = create_at_risk_section(df)
             
             return html.Div([
             html.H5(filename),
             html.H6(datetime.datetime.fromtimestamp(date).strftime('%Y-%m-%d %H:%M:%S')),
             dbc.Row([
-                dbc.Col(summary_section, md=8),  # Use 8 out of 12 columns for the summary
-                dbc.Col(html.Div(), md=4),  # This column acts as a space filler
+                dbc.Col([  
+                    summary_section, 
+                    # Below the Summary section, the Enrolment, Attendance, and Submission sections are laid out.
+                    dbc.Row([
+                        dbc.Col(enrolment_section, width=4),  
+                        
+                        # This column contains the Attendance and Submission sections, stacked vertically.
+                        dbc.Col([
+                            dbc.Row(attendance_section),
+                            dbc.Row(submission_section), 
+                        ], width=4),
+                    ]), 
+                ], width=8),
+                dbc.Col(risk_list, width=4),  # Risk section with assigned class.
             ]),
-            dbc.Row([
-                dbc.Col(html.Div(enrolment_section, className="enrolment-container"), md=3),
-                dbc.Col(
-                    html.Div([
-                        dbc.Row([
-                            html.Div(attendance_section, className="attendance-submission-container", style={'width': '35.25em'})
-                        ]),
-                        dbc.Row([
-                            html.Div(submission_section, className="attendance-submission-container", style={'width': '35.25em'})
-                        ])
-                    ]),  # Specify width here in your CSS style
-                    md=5
-                ),
-                dbc.Col(html.Div(), md=4)  # Adjust or remove as needed.
-            ])
         ], style={'padding-left': '1em', 'padding-right': '1em', 'padding-top': '1.5em'})
+    
     except Exception as e:
         return html.Div(['There was an error processing this file: {}'.format(e)])

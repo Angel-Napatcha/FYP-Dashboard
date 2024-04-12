@@ -93,14 +93,9 @@ def register_callbacks(app):
     Input('submission-level-of-study-dropdown', 'value')
     )
     def set_year_options(level_of_study):
-        years_of_course = {
-            'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
-            'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
-        }
-            
         if level_of_study == 'ug':
             year_options = [{'label': f'Year {i}', 'value': str(i)} for i in years_of_course['UG']]
-            default_year = '1'  # Set the default year to '0' for UG
+            default_year = '1'  # Set the default year to '1' for UG
         elif level_of_study == 'pgt':
             year_options = [{'label': f'Year {i}', 'value': str(i)} for i in years_of_course['PGT']]
             default_year = '1'  # Set the default year to '1' for PGT

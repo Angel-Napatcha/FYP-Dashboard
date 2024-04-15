@@ -20,7 +20,7 @@ def calculate_summary_statistics(df):
     current_students = df[df['Quarter'] == 4]
     total_students = current_students['User'].nunique()
 
-    #Average Attendance
+    # Average Attendance
     average_attendance = df['% Attendance'].mean() * 100  # Convert to percentage
     
     # Dropout Rate
@@ -70,7 +70,7 @@ def calculate_student_enrolment(df, level_of_study):
     # Total students per course
     total_students_per_course = students_q4.groupby('Course Code')['User'].nunique().to_dict()
     
-    # Initialize variable to hold yearly data
+    # Initialise variable to hold yearly data
     total_students_per_year_by_course = None
 
     if level_of_study == 'UG':
@@ -82,7 +82,7 @@ def calculate_student_enrolment(df, level_of_study):
 
         # Iterate over the grouped data to populate the dictionary
         for course, year_data in grouped_data.iterrows():
-            for year in range(6):  # Year 0 to Year 5
+            for year in range(6):
                 total_students_per_year_by_course[f'Year {year}'].append(year_data.get(year, 0))
     else:
         # Group by course and year, then count unique users
@@ -93,7 +93,7 @@ def calculate_student_enrolment(df, level_of_study):
 
         # Iterate over the grouped data to populate the dictionary
         for course, year_data in grouped_data.iterrows():
-            for year in range(1, 3):  # Year 1 to Year 2
+            for year in range(1, 3):
                 total_students_per_year_by_course[f'Year {year}'].append(year_data.get(year, 0))
 
     enrolment_result = {
@@ -103,6 +103,7 @@ def calculate_student_enrolment(df, level_of_study):
     return enrolment_result
 
 def calculate_attendance_rate(df, level_of_study, year_of_course):
+    # Check if necessary columns exist
     required_columns = ['% Attendance', 'Level of Study', 'Year of Course', 'Course Code', 'Quarter']
     for column in required_columns:
         if column not in df.columns:
@@ -142,6 +143,7 @@ def calculate_attendance_rate(df, level_of_study, year_of_course):
     return attendance_result
 
 def calculate_submission_rate(df, level_of_study, year_of_course):
+    # Check if necessary columns exist
     required_columns = ['Submitted', 'Assessments', 'Level of Study', 'Year of Course', 'Course Code', 'Quarter']
     for column in required_columns:
         if column not in df.columns:

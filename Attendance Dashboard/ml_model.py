@@ -3,12 +3,11 @@ from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
-# from sklearn.ensemble import RandomForestRegressor  # You can change this to any estimator
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
 def preprocess_data(df):
-    # Ensure all required columns are present
+   # Check if necessary columns exist
     required_columns = [
         'User', '% Attendance', 'Submitted', 'Assessments',
         'Quarter', 'Year of Course', 'Course Code'
@@ -36,7 +35,7 @@ def preprocess_data(df):
         initial_strategy='median',
         random_state=42
     )
-    columns_to_impute = ['Submitted', 'Assessments', '% Attendance']
+    columns_to_impute = ['% Attendance', 'Submitted', 'Assessments']
     df[columns_to_impute] = imputer.fit_transform(df[columns_to_impute])
     
     # Calculate Submission Rate
@@ -68,7 +67,7 @@ def preprocess_data(df):
     return df_aggregated
 
 def perform_model(df):
-    model = IsolationForest(n_estimators=100, contamination=0.25, random_state=42)
+    model = IsolationForest(n_estimators=100, contamination=0.20, random_state=42)
     df = df[df['% Attendance Scaled'] != "Data not provided"]  # Exclude records without valid scaled data
     model.fit(df[['% Attendance Scaled', 'Submission Rate Scaled']])
 

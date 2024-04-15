@@ -3,22 +3,22 @@ from dash import dcc, html, dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
 import base64
-import pandas as pd
 from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate, calculate_submission_rate
 from ml_model import detect_concerning_students
 
 def save_file(name, content):
-    """Decode and store a file uploaded with Plotly Dash."""
+    # Decode and store a file uploaded with Plotly Dash
     data = content.encode("utf8").split(b";base64,")[1]
     with open(os.path.join('uploaded_files', name), "wb") as fp:
         fp.write(base64.decodebytes(data))
 
 def create_summary_cards(df):
-    # Call the processing function
+    # Call the summary data processing function
     summary_data = calculate_summary_statistics(df)
 
-    # Create a layout to display processed data using Bootstrap components
+    # Create a layout to display summary data
     summary_content = dbc.Row([
+        # Total students card
         dbc.Col(
             className='summary-card',
             children=[
@@ -38,6 +38,7 @@ def create_summary_cards(df):
             ],
             lg=4, md=6
         ),
+        # Average attendance rate card
         dbc.Col(
             className='summary-card',
             children=[
@@ -50,6 +51,7 @@ def create_summary_cards(df):
             ],
             lg=4, md=6
         ),
+        # Course with highest attendance rate card
         dbc.Col(
             className='summary-card',
             children=[
@@ -71,6 +73,7 @@ def create_summary_cards(df):
             ],
             lg=4, md=6
         ),
+        # Course with lowest attendance rate card
         dbc.Col(
             className='summary-card',
             children=[
@@ -92,6 +95,7 @@ def create_summary_cards(df):
             ],
             lg=4, md=6
         ),
+        # Average submission rate card
         dbc.Col(
             className='summary-card',
             children=[
@@ -112,12 +116,14 @@ def create_summary_section(df):
     summary_content = create_summary_cards(df)
     
     summary_section = dbc.Container([
+        # Summary title
         html.H6("Summary", style={
             'text-align': 'left',
             'margin-bottom': '0.5em',
             'margin-left': '0.5em',
             'margin-top': '0.75em'
         }),
+        # Summary content
         dbc.Row(
             summary_content,
             justify="center",
@@ -127,6 +133,7 @@ def create_summary_section(df):
     return summary_section
 
 def create_enrolment_graph(df, level_of_study):
+    # Determine parameters based on the level of study
     if level_of_study == 'UG':
         colors = ['#FF899E', '#FFBD55', '#E9E16A', '#4ECFA5', '#59BAEF', '#857BB8']
         xaxis_range = [-8, 200]
@@ -143,14 +150,19 @@ def create_enrolment_graph(df, level_of_study):
         year_level = 'Year'
         year_levels = [f'Year {i+1}' for i in range(len(colors))]
 
+    # Call the student enrolemnt data processing function
     enrolment_data = calculate_student_enrolment(df, level_of_study)
+    
+    # Determine graph height
     num_courses = len(enrolment_data['total_students_per_course'])
     graph_height = num_courses * (bar_height)
     
+    # Prepare data for plotting
     data = []
     cumulative_sums = {key: 0 for key in enrolment_data['total_students_per_course'].keys()}
     color_iterator = iter(colors)
     
+    # Iterate over years and courses to create traces for the graph
     for year in enrolment_data['total_students_per_year_by_course']:
         year_data = enrolment_data['total_students_per_year_by_course'][year]
         for i, key in enumerate(enrolment_data['total_students_per_course'].keys()):
@@ -174,6 +186,7 @@ def create_enrolment_graph(df, level_of_study):
         )
         data.append(trace)
 
+    # Layout configuration
     layout = go.Layout(
         barmode='stack',
         yaxis={
@@ -189,10 +202,13 @@ def create_enrolment_graph(df, level_of_study):
         showlegend=False,
         plot_bgcolor='rgba(0,0,0,0)',
         margin=dict(l=50, r=30, t=15, b=15),
-        font=dict(family='sans-serif', size=12)  # Default font for the whole layout
+        font=dict(family='sans-serif', size=12)
     )
 
+    # Figure configuration
     enrolment_figure = go.Figure(data=data, layout=layout)
+    
+    # Graph configuration
     enrolment_graph = dcc.Graph(
         id=enrolment_id, 
         figure=enrolment_figure, 
@@ -204,7 +220,7 @@ def create_enrolment_graph(df, level_of_study):
             }
         )
 
-    # Legends
+    # Create legends for the graph
     legend_entries = []
     for color, year in zip(colors, year_levels):
         legend_entry = html.Div([
@@ -212,19 +228,22 @@ def create_enrolment_graph(df, level_of_study):
             html.Span(year, className='legend-text')
         ], className='legend-entry')
         legend_entries.append(legend_entry)
-    # Arrange entries into columns of two (can be adjusted based on the number of years)
+    # Arrange entries into columns of two
     columns = [dbc.Col(legend_entries[i:i + 2], className='legend-column', width="auto") for i in range(0, len(legend_entries), 2)]
     enrolment_legend = html.Div(dbc.Row(columns, className='row'), style={'marginTop': '20px', 'marginLeft': '0'})
     
     return enrolment_graph, enrolment_legend
 
 def create_enrolment_section(df):
+    # Create graphs and legends for UG and PGT levels
     ug_enrolment_graph, ug_enrolment_legend = create_enrolment_graph(df, 'UG')
     pgt_enrolment_graph, pgt_enrolment_legend = create_enrolment_graph(df, 'PGT')
     
+    # Create the enrolment section layout
     enrolment_section = html.Div(
         [
             dbc.Row(
+                # Students enrolment title
                 html.H6("Students Enrolment", style={
                     'text-align': 'left',
                     'margin-bottom': '1em',
@@ -234,6 +253,7 @@ def create_enrolment_section(df):
                 align="center"
             ),
             dbc.Row(
+                # Dropdown menu to switch between UG and PGT
                 dcc.Dropdown(
                     id='student-enrolment-dropdown',
                     options=[
@@ -251,6 +271,7 @@ def create_enrolment_section(df):
                     'margin-bottom': '1em'
                 }
             ),
+            # UG Enrolment Graph and Legend
             html.Div(
                 [
                     ug_enrolment_graph,
@@ -259,6 +280,7 @@ def create_enrolment_section(df):
                 id='ug-enrolment-content', 
                 style={'display': 'block'} 
             ),
+            # PGT Enrolment Graph and Legend
             html.Div(
                 [
                     pgt_enrolment_graph,
@@ -273,8 +295,10 @@ def create_enrolment_section(df):
     return enrolment_section
 
 def create_attendance_graph(df, level_of_study, year_of_course):
-    # Data preparation
+    # Call the attendance rate data processing function
     attendance_rates = calculate_attendance_rate(df, level_of_study, year_of_course)
+    
+    # Determine parameters
     courses = [course_code[0] for course_code in attendance_rates.keys()]
     quarters = ['Week 1-3', 'Week 4-6', 'Week 6-9', 'Week 9-12']
     num_quarters = len(quarters)
@@ -283,7 +307,7 @@ def create_attendance_graph(df, level_of_study, year_of_course):
     colors = ['#7252A7', '#9099FF', '#6EB1FF', '#9CDBFF']
 
     # Constants for bar dimensions and spacing
-    bar_width = 0.1   # Fixed width for each bar
+    bar_width = 0.1 
     space_between_bars = 0.03
     space_between_groups = 0.15
 
@@ -370,30 +394,32 @@ def create_attendance_graph(df, level_of_study, year_of_course):
         plot_bgcolor='#F7F7F7',
         margin=dict(l=75, r=20, t=35, b=35),
         autosize=False,
-        width=graph_width  # Dynamically adjusted width
+        width=graph_width 
     )
 
+    # Figure configuration
     attendance_figure = go.Figure(data=traces, layout=layout)
 
-    # Create the dcc.Graph object to render in Dash
+    # Graph configuration
     attendance_graph = dcc.Graph(
         id='attendance-graph',
         figure=attendance_figure,
         style={
             'border-radius': '15px',
-            'overflowX': 'auto',  # Allows horizontal scrolling if needed
+            'overflowX': 'auto', 
             'width': '100%',
-            'maxWidth': '28.05em',  # Ensures the graph width is dynamically set
+            'maxWidth': '28.05em', 
         }
     )
 
     return attendance_graph
 
 def create_attendance_section(df):
+    # Define levels of study and corresponding years of courses
     levels_of_study = ['UG', 'PGT']
     years_of_course = {
-        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
-        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+        'UG': range(0, 6),
+        'PGT': range(1, 3) 
     }
 
     # Prepare graph containers by level and year
@@ -402,10 +428,9 @@ def create_attendance_section(df):
         for year in years_of_course[level]:
             graph_id = f'{level.lower()}-year-{year}-attendance'
             attendance_graph = create_attendance_graph(df, level, year)
-            # Each graph is placed in separate columns
             graph_containers[graph_id] = html.Div(attendance_graph, id=graph_id, style={'display': 'none'})
     
-    # Dropdowns for selecting level of study and year of course
+    # Dropdowns for selecting level of study
     level_of_study_dropdown = dcc.Dropdown(
         id='attendance-level-of-study-dropdown',
         options=[{'label': level, 'value': level.lower()} for level in levels_of_study],
@@ -414,18 +439,21 @@ def create_attendance_section(df):
         searchable=False,
         className='custom-dropdown',
     )
-
+    
+    # Dropdowns for selecting year of course
     year_of_course_dropdown = dcc.Dropdown(
         id='attendance-year-of-course-dropdown',
-        options=[],  # Options will be set by callback based on selected level of study
+        options=[],
         clearable=False,
         searchable=False,
         className='year-dropdown'
     )
    
+    # Define parameters
     colors = ['#7252A7', '#9099FF', '#6EB1FF', '#9CDBFF']
     num_quarters = 4
     
+    # Create legends for the graph
     attendance_legend = html.Div(
         [html.Div(
             [
@@ -456,8 +484,10 @@ def create_attendance_section(df):
         )
     ], className='attendance-submission-content')
     
+    # Create the attendance section layout
     attendance_section = html.Div([
         html.Div([
+            # Students attendance title
             dbc.Row(html.H6("Attendance Rates", style={
                 'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
             }), justify="start", align="center"),
@@ -468,8 +498,10 @@ def create_attendance_section(df):
     return attendance_section
 
 def create_submission_graph(df, level_of_study, year_of_course):
-    # Data preparation
+    # Call the submission rate data processing function
     submission_rates = calculate_submission_rate(df, level_of_study, year_of_course)
+    
+    # Determine parameters
     courses = [course_code for course_code in submission_rates.keys()]
     average_submissions = [course_data['Average Submission Rate'] for course_data in submission_rates.values()]
     bar_color = '#2F4CFF'  # Uniform color for all bars
@@ -526,27 +558,29 @@ def create_submission_graph(df, level_of_study, year_of_course):
         width=graph_width  # Dynamically adjusted width
     )
 
+    # Figure configuration
     submission_figure = go.Figure(data=traces, layout=layout)
 
-    # Create the dcc.Graph object to render in Dash
+    # Graph configuration
     submission_graph = dcc.Graph(
         id='submission-graph',
         figure=submission_figure,
         style={
             'border-radius': '15px',
-            'overflowX': 'auto',  # Allows horizontal scrolling if needed
+            'overflowX': 'auto',  
             'width': '100%',
-            'maxWidth': '28.05em',  # Ensures the graph width is dynamically set
+            'maxWidth': '28.05em',
         }
     )
 
     return submission_graph
 
 def create_submission_section(df):
+     # Define levels of study and corresponding years of courses
     levels_of_study = ['UG', 'PGT']
     years_of_course = {
-        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
-        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+        'UG': range(0, 6),  
+        'PGT': range(1, 3) 
     }
 
     # Prepare graph containers by level and year
@@ -558,7 +592,7 @@ def create_submission_section(df):
             # Each graph is placed in separate columns
             graph_containers[graph_id] = html.Div(submission_graph, id=graph_id, style={'display': 'none'})
     
-    # Dropdowns for selecting level of study and year of course
+    # Dropdowns for selecting level of study
     level_of_study_dropdown = dcc.Dropdown(
         id='submission-level-of-study-dropdown',
         options=[{'label': level, 'value': level.lower()} for level in levels_of_study],
@@ -568,6 +602,7 @@ def create_submission_section(df):
         className='custom-dropdown'
     )
 
+    # Dropdowns for selecting year of course
     year_of_course_dropdown = dcc.Dropdown(
         id='submission-year-of-course-dropdown',
         options=[],  # Options will be set by callback based on selected level of study
@@ -577,6 +612,7 @@ def create_submission_section(df):
         className='year-dropdown'
     )
     
+    # Combining all components into the content section
     submission_content = html.Div([
         html.Div([
             level_of_study_dropdown,
@@ -591,9 +627,10 @@ def create_submission_section(df):
         )
     ], className='attendance-submission-content')
     
-    # Overall section including the header
+     # Create the submission section layout
     submission_section = html.Div([
         html.Div([
+            # Students submission title
             dbc.Row(html.H6("Submission Rates", style={
                 'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
             }), justify="start", align="center"),
@@ -608,7 +645,6 @@ def create_ug_table(df, year_of_course):
     ug_students_list = detect_concerning_students(df, level_of_study, year_of_course)
     
     if not ug_students_list.empty:
-        # Wrap the DataTable in a Div and assign the class to the Div
         return html.Div(
             dash_table.DataTable(
                 id='ug-students-table',
@@ -619,27 +655,29 @@ def create_ug_table(df, year_of_course):
                     {'name': 'Attendance Rate (%)', 'id': '% Attendance'},
                     {'name': 'Submission Rate (%)', 'id': 'Submission Rate'},
                 ],
-                # The inline styles can be moved to CSS if you've defined them there
+                # Inline styles for the table cells
                 style_cell={
                     'textAlign': 'center',
                     'padding': '10px',
                     'backgroundColor': '#FFF',
                     'border': 'none',
                     'font-family': 'sans-serif',
-                    'font-size': '12.5px'  # Inline style as a test
+                    'font-size': '12.5px'
                 },
+                # Inline styles for the table header
                 style_header={
                     'fontWeight': 'bold',
                     'backgroundColor': '#f4f4f4',
                     'fontFamily': 'sans-serif',
                     'fontSize': '12.5px'
                 },
+                # Conditional styling for odd rows
                 style_data_conditional=[
                     {'if': {'row_index': 'odd'}, 'backgroundColor': '#f9f9f9'}
                 ],
                 style_as_list_view=True,
             ),
-            className='at-risk-table'  # Assign the CSS class to the Div
+            className='at-risk-table'
         )
     else:
         return html.Div("No at-risk students found for the given criteria.", style={'textAlign': 'center', 'fontFamily': 'sans-serif', 'fontSize': '14px', 'marginTop': '20px'})
@@ -649,7 +687,6 @@ def create_pgt_table(df, year_of_course):
     pgt_students_list = detect_concerning_students(df, level_of_study, year_of_course)
     
     if not pgt_students_list.empty:
-        # Wrap the DataTable in a Div and assign the class to the Div
         return html.Div(
             dash_table.DataTable(
                 id='pgt-students-table',
@@ -660,21 +697,23 @@ def create_pgt_table(df, year_of_course):
                     {'name': 'Attendance Rate (%)', 'id': '% Attendance'},
                     {'name': 'Submission Rate (%)', 'id': 'Submission Rate'},
                 ],
-                # The inline styles can be moved to CSS if you've defined them there
+                # Inline styles for the table cells
                 style_cell={
                     'textAlign': 'center',
                     'padding': '10px',
                     'backgroundColor': '#FFF',
                     'border': 'none',
                     'font-family': 'sans-serif',
-                    'font-size': '12.5px'  # Inline style as a test
+                    'font-size': '12.5px'
                 },
+                # Inline styles for the table header
                 style_header={
                     'fontWeight': 'bold',
                     'backgroundColor': '#f4f4f4',
                     'fontFamily': 'sans-serif',
                     'fontSize': '12.5px'
                 },
+                # Conditional styling for odd rows
                 style_data_conditional=[
                     {'if': {'row_index': 'odd'}, 'backgroundColor': '#f9f9f9'}
                 ],
@@ -687,38 +726,36 @@ def create_pgt_table(df, year_of_course):
 
 def create_concerning_students_section(df):
     years_of_course = {
-        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
-        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+        'UG': range(0, 6), 
+        'PGT': range(1, 3) 
     }
     
-    # Prepare graph containers by level and year
+    # Prepare containers for UG tables
     ug_table_containers = {}
-    for year in years_of_course['UG']:  # We are referencing 'UG' here
+    for year in years_of_course['UG']:
         graph_id = f'ug-year-{year}-table'
-        ug_table = create_ug_table(df, year)  # This function needs to be defined
-        # Each graph is placed in a Div and hidden initially
+        ug_table = create_ug_table(df, year) 
         ug_table_containers[graph_id] = html.Div(ug_table, id=graph_id, style={'display': 'none'})
     
     ug_year_of_course_dropdown = dcc.Dropdown(
         id='ug-year-of-course-dropdown',
         options=[{'label': 'Year ' + str(year), 'value': year} for year in range(6)],  # Dropdown options corrected
-        value=1,  # Default value set to 0 which is a valid year in the UG range
+        value=1,
         clearable=False,
         searchable=False,
         className='grey-dropdown'
     )
     
-    # Prepare graph containers by level and year
+    # Prepare containers for PGT tables
     pgt_table_containers = {}
-    for year in years_of_course['PGT']:  # We are referencing 'UG' here
+    for year in years_of_course['PGT']: 
         graph_id = f'pgt-year-{year}-table'
-        pgt_table = create_pgt_table(df, year)  # This function needs to be defined
-        # Each graph is placed in a Div and hidden initially
+        pgt_table = create_pgt_table(df, year) 
         pgt_table_containers[graph_id] = html.Div(pgt_table, id=graph_id, style={'display': 'none'})
     
     pgt_year_of_course_dropdown = dcc.Dropdown(
         id='pgt-year-of-course-dropdown',
-        options=[{'label': f'Year {year}', 'value': year} for year in range(1, 3)],  # Dropdown options for Year 1 and Year 2
+        options=[{'label': f'Year {year}', 'value': year} for year in range(1, 3)], 
         value=1,
         clearable=False,
         searchable=False,
@@ -729,9 +766,10 @@ def create_concerning_students_section(df):
     html.Div([
         dbc.Row(
             html.H6([
-                html.Span("Concerning Students", style={'color': 'red'}),  # "Concerning Students" in red
-                " Filtered By",  # Continuation in default color on the same line
-                html.Br(),  # Line break to move "Machine Learning" to the new line
+                # Title for the section
+                html.Span("Concerning Students", style={'color': 'red'}), 
+                " Filtered By", 
+                html.Br(),  
                 "Machine Learning"
             ], style={
                 'text-align': 'left',
@@ -739,12 +777,14 @@ def create_concerning_students_section(df):
                 'margin-top': '0.5em'
             }), justify="start", align="center"
         ),
+        # UG section
         html.Div('Undergraduate', className='ug-label'),
-        ug_year_of_course_dropdown,  # Assuming this variable is defined elsewhere in your code
-        html.Div(list(ug_table_containers.values()), className='ug-table-container'),  # Container for UG tables, with dictionary to list conversion
+        ug_year_of_course_dropdown,
+        html.Div(list(ug_table_containers.values()), className='ug-table-container'),
+        # PGT section
         html.Div('Postgraduate', className='pgt-label'),
-        pgt_year_of_course_dropdown,  # Assuming this variable is defined elsewhere in your code
-        html.Div(list(pgt_table_containers.values()), className='pgt-table-container'),  # Container for PGT tables, with dictionary to list conversion
+        pgt_year_of_course_dropdown,
+        html.Div(list(pgt_table_containers.values()), className='pgt-table-container'),
     ], className='risk-container')
 ])
     

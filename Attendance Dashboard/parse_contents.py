@@ -6,7 +6,7 @@ import base64
 import io
 import pandas as pd
 import datetime
-from sections import create_summary_section, create_enrolment_section, create_attendance_section, create_submission_section, create_at_risk_section
+from sections import create_summary_section, create_enrolment_section, create_attendance_section, create_submission_section, create_concerning_students_section
 
 def parse_contents(contents, filename, date):
     if contents is None or filename is None or date is None:
@@ -26,7 +26,7 @@ def parse_contents(contents, filename, date):
             enrolment_section = create_enrolment_section(df)
             attendance_section = create_attendance_section(df)
             submission_section = create_submission_section(df)
-            risk_list = create_at_risk_section(df)
+            concerning_students_section = create_concerning_students_section(df)
             
             return html.Div([
             html.H5(filename),
@@ -45,7 +45,7 @@ def parse_contents(contents, filename, date):
                         ], width=4),
                     ]), 
                 ], width=8),
-                dbc.Col(risk_list, width=4),  # Risk section with assigned class.
+                dbc.Col(concerning_students_section, width=4),  # Risk section with assigned class.
             ]),
         ], style={'padding-left': '1em', 'padding-right': '1em', 'padding-top': '1.5em'})
     

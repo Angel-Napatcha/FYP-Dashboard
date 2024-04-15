@@ -147,6 +147,7 @@
 .custom-dropdown .Select-clear-zone {
     display: none;
 }
+
 /* year of course */
 .year-dropdown .Select-control {
     background-color: #2f4bff3f;
@@ -180,6 +181,39 @@
     display: none;
 }
 
+/* year of course */
+.grey-dropdown .Select-control {
+    background-color: #c6c5c571;
+    border-radius: 10px;
+    border: none;
+    width: 80px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    margin-right: 1.9em;
+}
+
+.grey-dropdown .Select-placeholder {
+    font-size: 0.9em; /* Smaller font size for placeholder */
+    line-height: -20px; /* Adjusted to match the height of the dropdown */
+    color: #a8abaf; /* Lighter color for placeholder text */
+}
+
+.grey-dropdown .Select-value,
+.grey-dropdown .Select-value-label {
+    font-size: 0.9em;
+    line-height: 35px;
+}
+
+.grey-dropdown .Select-arrow-zone {
+    padding-left: 38px;
+    padding-right: 0px;
+}
+
+.grey-dropdown .Select-clear-zone {
+    display: none;
+}
+
 .enrolment-container {
     padding: 1em;
     background-color: #e4e7f5; 
@@ -189,7 +223,7 @@
     margin-right: -0.5em;
     justify-content: center; /* Center the contents */
     align-items: center;
-    /* height: 37em; You may adjust the height as necessary */
+    height: 37.1em; 
 }
 
 .dropdown-row {
@@ -226,10 +260,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 0em;
     margin-bottom: 1em;
-    width: 35.25em;
-    /* justify-content: center; /* Center the contents */
-    /* align-items: center; */ 
-    /* height: 18em; You may adjust the height as necessary */
+    width: 37em;
 }
 
 /* DataTable specific styles */
@@ -240,8 +271,11 @@
     border-collapse: separate; /* Separates the border of each cell */
     border-spacing: 0; /* Removes spacing between borders */
     width: 100%; /* Adjust width as needed */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    margin-top: 0.6em;
     margin-bottom: 1em; /* Adjust if needed */
+    border-radius: 15px; /* Rounded corners for the table */
+    overflow: hidden; /* Ensures the rounded corners are visible */
 }
 
 .at-risk-table th,
@@ -260,14 +294,48 @@
     background-color: #f9f9f9; /* For zebra striping */
 }
 
+/* Style to control the DataTable overflow and set a max height */
+.at-risk-table .dash-spreadsheet-container {
+    max-height: 15.5em; /* Set the maximum height for the DataTable */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
+
 .risk-container {
     padding: 1em;
-    background-color: #e4e7f5; 
+    background-color: #F2E5EA; 
     border-radius: 20px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
     margin-top: 1em;
     margin-left: -0.5em;
     justify-content: center; /* Center the contents */
     align-items: center;
-    /* height: 50em; You may adjust the height as necessary */
+    height: 51em;
+}
+
+.ug-label {
+    background-color: #f1bcc189;
+    color: black;
+    /* text-align: center; */
+    padding: 9px;
+    font-size: 13px;
+    font-weight: 350;
+    border-radius: 10px; /* Gives a rounded effect, adjust as needed */
+    margin-top: 6px;
+    margin-bottom: 10px; /* Space before the table */
+    width: fit-content; /* Adjust based on your layout needs */
+    justify-content: start;
+}
+
+.pgt-label {
+    background-color: #f1bcc189;
+    color: black;
+    /* text-align: center; */
+    padding: 9px;
+    font-size: 13px;
+    font-weight: 350;
+    border-radius: 10px; /* Gives a rounded effect, adjust as needed */
+    margin-top: 35px;
+    margin-bottom: 10px; /* Space before the table */
+    width: fit-content; /* Adjust based on your layout needs */
+    justify-content: start;
 }

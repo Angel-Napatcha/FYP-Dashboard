@@ -120,3 +120,23 @@ def register_callbacks(app):
         # Generate the output list with the correct length
         output = [visibility.get(f'{level.lower()}-year-{year}-submission', {'display': 'none'}) for level in ['UG', 'PGT'] for year in years_of_course[level]]
         return output
+    
+    @app.callback(
+    [Output(f'ug-year-{year}-table', 'style') for year in range(6)],
+    [Input('ug-year-of-course-dropdown', 'value')]
+    )
+    def show_ug_tables(selected_year):
+        # Generate a dictionary to control the visibility of each UG table
+        visibility = {f'ug-year-{year}-table': {'display': 'block' if year == selected_year else 'none'} for year in range(6)}
+        # Output list should match the number of UG years
+        return [visibility[f'ug-year-{year}-table'] for year in range(6)]
+
+    @app.callback(
+        [Output(f'pgt-year-{year}-table', 'style') for year in range(1, 3)],
+        [Input('pgt-year-of-course-dropdown', 'value')]
+    )
+    def show_pgt_tables(selected_year):
+        # Generate a dictionary to control the visibility of each PGT table
+        visibility = {f'pgt-year-{year}-table': {'display': 'block' if year == selected_year else 'none'} for year in range(1, 3)}
+        # Output list should match the number of PGT years
+        return [visibility[f'pgt-year-{year}-table'] for year in range(1, 3)]

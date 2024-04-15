@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 import base64
 import pandas as pd
 from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate, calculate_submission_rate
-from ml_model import detect_students_at_risk
+from ml_model import detect_concerning_students
 
 def save_file(name, content):
     """Decode and store a file uploaded with Plotly Dash."""
@@ -128,18 +128,20 @@ def create_summary_section(df):
 
 def create_enrolment_graph(df, level_of_study):
     if level_of_study == 'UG':
-        colors = ['#7BBC9A', '#478DB8', '#E9BA5D', '#E46E53', '#9C71C6', '#AF7C4F']
+        colors = ['#FF899E', '#FFBD55', '#E9E16A', '#4ECFA5', '#59BAEF', '#857BB8']
         xaxis_range = [-8, 200]
         bar_height = 29
         enrolment_id = 'ug-enrolment-graph'
         year_level = 'Year'
+        year_levels = [f'Year {i}' for i in range(len(colors))]
         
     elif level_of_study == 'PGT':
-        colors = ['#478DB8', '#E9BA5D']
+        colors = ['#FFBD55', '#E9E16A']
         xaxis_range = [-2, 50]
         bar_height = 33
         enrolment_id = 'pgt-enrolment-graph'
         year_level = 'Year'
+        year_levels = [f'Year {i+1}' for i in range(len(colors))]
 
     enrolment_data = calculate_student_enrolment(df, level_of_study)
     num_courses = len(enrolment_data['total_students_per_course'])
@@ -203,7 +205,6 @@ def create_enrolment_graph(df, level_of_study):
         )
 
     # Legends
-    year_levels = [f'Year {i}' for i in range(len(colors))]
     legend_entries = []
     for color, year in zip(colors, year_levels):
         legend_entry = html.Div([
@@ -382,7 +383,7 @@ def create_attendance_graph(df, level_of_study, year_of_course):
             'border-radius': '15px',
             'overflowX': 'auto',  # Allows horizontal scrolling if needed
             'width': '100%',
-            'maxWidth': '26.15em',  # Ensures the graph width is dynamically set
+            'maxWidth': '28.05em',  # Ensures the graph width is dynamically set
         }
     )
 
@@ -535,7 +536,7 @@ def create_submission_graph(df, level_of_study, year_of_course):
             'border-radius': '15px',
             'overflowX': 'auto',  # Allows horizontal scrolling if needed
             'width': '100%',
-            'maxWidth': '26.15em',  # Ensures the graph width is dynamically set
+            'maxWidth': '28.05em',  # Ensures the graph width is dynamically set
         }
     )
 
@@ -602,18 +603,21 @@ def create_submission_section(df):
         
     return submission_section
 
-def create_ug_students_at_risk_list(df, level_of_study, year_of_course, course_code):
-    students_at_risk = detect_students_at_risk(df, level_of_study, year_of_course, course_code)
+def create_ug_table(df, year_of_course):
+    level_of_study = 'UG'
+    ug_students_list = detect_concerning_students(df, level_of_study, year_of_course)
     
-    if not students_at_risk.empty:
+    if not ug_students_list.empty:
         # Wrap the DataTable in a Div and assign the class to the Div
         return html.Div(
             dash_table.DataTable(
-                data=students_at_risk.to_dict('records'),
+                id='ug-students-table',
+                data=ug_students_list.to_dict('records'),
                 columns=[
-                    {'name': 'User', 'id': 'User'},
-                    {'name': 'Attendance Rate', 'id': '% Attendance'},
-                    {'name': 'Submission Rate', 'id': 'Submission Rate'},
+                    {'name': 'Student', 'id': 'User'},
+                    {'name': 'Course Code', 'id': 'Course Code'},
+                    {'name': 'Attendance Rate (%)', 'id': '% Attendance'},
+                    {'name': 'Submission Rate (%)', 'id': 'Submission Rate'},
                 ],
                 # The inline styles can be moved to CSS if you've defined them there
                 style_cell={
@@ -621,10 +625,14 @@ def create_ug_students_at_risk_list(df, level_of_study, year_of_course, course_c
                     'padding': '10px',
                     'backgroundColor': '#FFF',
                     'border': 'none',
+                    'font-family': 'sans-serif',
+                    'font-size': '12.5px'  # Inline style as a test
                 },
                 style_header={
                     'fontWeight': 'bold',
                     'backgroundColor': '#f4f4f4',
+                    'fontFamily': 'sans-serif',
+                    'fontSize': '12.5px'
                 },
                 style_data_conditional=[
                     {'if': {'row_index': 'odd'}, 'backgroundColor': '#f9f9f9'}
@@ -634,32 +642,110 @@ def create_ug_students_at_risk_list(df, level_of_study, year_of_course, course_c
             className='at-risk-table'  # Assign the CSS class to the Div
         )
     else:
-        return html.Div("No at-risk students found for the given criteria.", style={'textAlign': 'center'})
+        return html.Div("No at-risk students found for the given criteria.", style={'textAlign': 'center', 'fontFamily': 'sans-serif', 'fontSize': '14px', 'marginTop': '20px'})
+
+def create_pgt_table(df, year_of_course):
+    level_of_study = 'PGT'
+    pgt_students_list = detect_concerning_students(df, level_of_study, year_of_course)
     
-    
-def create_at_risk_section(df):
-    students_at_risk_list = create_ug_students_at_risk_list(df, 'UG', 3, 'H3002U')
-    
-    risk_content = html.Div([
-        # html.Div([
-        #     level_of_study_dropdown,
-        #     year_of_course_dropdown
-        # ], className='dropdown-row'),
-        dbc.Col(
-            html.Div(
-               students_at_risk_list
+    if not pgt_students_list.empty:
+        # Wrap the DataTable in a Div and assign the class to the Div
+        return html.Div(
+            dash_table.DataTable(
+                id='pgt-students-table',
+                data=pgt_students_list.to_dict('records'),
+                columns=[
+                    {'name': 'Student', 'id': 'User'},
+                    {'name': 'Course Code', 'id': 'Course Code'},
+                    {'name': 'Attendance Rate (%)', 'id': '% Attendance'},
+                    {'name': 'Submission Rate (%)', 'id': 'Submission Rate'},
+                ],
+                # The inline styles can be moved to CSS if you've defined them there
+                style_cell={
+                    'textAlign': 'center',
+                    'padding': '10px',
+                    'backgroundColor': '#FFF',
+                    'border': 'none',
+                    'font-family': 'sans-serif',
+                    'font-size': '12.5px'  # Inline style as a test
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                    'backgroundColor': '#f4f4f4',
+                    'fontFamily': 'sans-serif',
+                    'fontSize': '12.5px'
+                },
+                style_data_conditional=[
+                    {'if': {'row_index': 'odd'}, 'backgroundColor': '#f9f9f9'}
+                ],
+                style_as_list_view=True,
             ),
-            width=12
+            className='at-risk-table'  # Assign the CSS class to the Div
         )
-    ], className='attendance-submission-content')
+    else:
+        return html.Div("No at-risk students found for the given criteria.", style={'textAlign': 'center', 'fontFamily': 'sans-serif', 'fontSize': '14px', 'marginTop': '20px'})
+
+def create_concerning_students_section(df):
+    years_of_course = {
+        'UG': range(0, 6),  # Year 0 to Year 5 for Undergraduates
+        'PGT': range(1, 3)  # Year 1 to Year 2 for Postgraduates
+    }
     
-    risk_section = html.Div([
-        html.Div([
-            dbc.Row(html.H6('Students At Risk', style={
-                'text-align': 'left', 'margin-bottom': '1em', 'margin-top': '0.5em'
-            }), justify="start", align="center"),
-            risk_content
-        ], className='risk-container')  # Add the risk-container class here
-    ])
+    # Prepare graph containers by level and year
+    ug_table_containers = {}
+    for year in years_of_course['UG']:  # We are referencing 'UG' here
+        graph_id = f'ug-year-{year}-table'
+        ug_table = create_ug_table(df, year)  # This function needs to be defined
+        # Each graph is placed in a Div and hidden initially
+        ug_table_containers[graph_id] = html.Div(ug_table, id=graph_id, style={'display': 'none'})
     
-    return risk_section
+    ug_year_of_course_dropdown = dcc.Dropdown(
+        id='ug-year-of-course-dropdown',
+        options=[{'label': 'Year ' + str(year), 'value': year} for year in range(6)],  # Dropdown options corrected
+        value=1,  # Default value set to 0 which is a valid year in the UG range
+        clearable=False,
+        searchable=False,
+        className='grey-dropdown'
+    )
+    
+    # Prepare graph containers by level and year
+    pgt_table_containers = {}
+    for year in years_of_course['PGT']:  # We are referencing 'UG' here
+        graph_id = f'pgt-year-{year}-table'
+        pgt_table = create_pgt_table(df, year)  # This function needs to be defined
+        # Each graph is placed in a Div and hidden initially
+        pgt_table_containers[graph_id] = html.Div(pgt_table, id=graph_id, style={'display': 'none'})
+    
+    pgt_year_of_course_dropdown = dcc.Dropdown(
+        id='pgt-year-of-course-dropdown',
+        options=[{'label': f'Year {year}', 'value': year} for year in range(1, 3)],  # Dropdown options for Year 1 and Year 2
+        value=1,
+        clearable=False,
+        searchable=False,
+        className='grey-dropdown'
+    )
+    
+    at_risk_students_section = html.Div([
+    html.Div([
+        dbc.Row(
+            html.H6([
+                html.Span("Concerning Students", style={'color': 'red'}),  # "Concerning Students" in red
+                " Filtered By",  # Continuation in default color on the same line
+                html.Br(),  # Line break to move "Machine Learning" to the new line
+                "Machine Learning"
+            ], style={
+                'text-align': 'left',
+                'margin-bottom': '1em',
+                'margin-top': '0.5em'
+            }), justify="start", align="center"
+        ),
+        html.Div('Undergraduate', className='ug-label'),
+        ug_year_of_course_dropdown,  # Assuming this variable is defined elsewhere in your code
+        html.Div(list(ug_table_containers.values()), className='ug-table-container'),  # Container for UG tables, with dictionary to list conversion
+        html.Div('Postgraduate', className='pgt-label'),
+        pgt_year_of_course_dropdown,  # Assuming this variable is defined elsewhere in your code
+        html.Div(list(pgt_table_containers.values()), className='pgt-table-container'),  # Container for PGT tables, with dictionary to list conversion
+    ], className='risk-container')
+])
+    
+    return at_risk_students_section

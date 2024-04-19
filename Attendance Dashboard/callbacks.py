@@ -3,7 +3,6 @@ from dash import html, no_update
 from sections import save_file
 from parse_contents import parse_contents
 
-
 def register_callbacks(app):
     # Callback for processing and displaying uploaded Excel file
     @app.callback(

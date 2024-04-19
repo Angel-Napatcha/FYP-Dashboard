@@ -1,6 +1,5 @@
 from dash import dcc, html
 
-
 def upload_layout():
     # Layout for the file upload interface
     return html.Div([

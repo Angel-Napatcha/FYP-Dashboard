@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def calculate_summary_statistics(df):
     # Check if necessary columns exist
     required_columns = ['User', '% Attendance', 'Submitted', 'Assessments', 'Course Code', 'Quarter']

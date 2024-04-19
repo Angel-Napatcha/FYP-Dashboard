@@ -1,17 +1,32 @@
 import os
+import base64
 from dash import dcc, html, dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objs as go
-import base64
+from cryptography.fernet import Fernet
 from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate, calculate_submission_rate
 from ml_model import detect_concerning_students
 
+# Fernet key
+key = 'UjtHK2fF0D0kySPvLvheflVt010YeDMSoHhVlim6LPg='
+if key is None:
+    raise ValueError("Encryption key not found.")
+cipher = Fernet(key.encode())
 
 def save_file(name, content):
-    # Decode and store a file uploaded with Plotly Dash
-    data = content.encode("utf8").split(b";base64,")[1]
+    # Decode the base64-encoded content
+    content_type, content_string = content.split(',')
+    decoded_content = base64.b64decode(content_string)
+
+    # Encrypt the content
+    encrypted_content = cipher.encrypt(decoded_content)
+
+    # Encode the encrypted content as base64
+    encrypted_base64_content = base64.b64encode(encrypted_content).decode('utf-8')
+
+    # Save the encrypted content
     with open(os.path.join('uploaded_files', name), "wb") as fp:
-        fp.write(base64.decodebytes(data))
+        fp.write(f'data:application/octet-stream;base64,{encrypted_base64_content}'.encode())
 
 def create_summary_cards(df):
     # Call the summary data processing function

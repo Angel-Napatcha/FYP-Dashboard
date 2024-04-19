@@ -5,7 +5,6 @@ from sklearn.impute import IterativeImputer
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-
 def preprocess_data(df):
    # Check if necessary columns exist
     required_columns = [

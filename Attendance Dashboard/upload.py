@@ -1,7 +1,8 @@
 from dash import dcc, html
 
+
 def upload_layout():
-    # Define a layout for the file upload interface
+    # Layout for the file upload interface
     return html.Div([
         dcc.Upload(
             id='upload-data',
@@ -10,10 +11,13 @@ def upload_layout():
                 html.A('Select Files')
             ], className='upload-text'),
             className='custom-upload',
-            style={'display': 'block'}
+            style={'width': '100%', 'padding': '20px', 'borderWidth': '1px', 'borderStyle': 'dashed', 'borderRadius': '5px', 'textAlign': 'center'}
         ),
-        # Div for displaying outputs after file upload, initially empty
-        html.Div(id='output-data-upload'),
-        # Div for showing a loading state, hidden by default
-        html.Div(id='loading-state', children=[html.Div("Loading...")], style={'display': 'none'})
+        dcc.Loading(
+            id='loading-upload',
+            children=html.Div(id='output-data-upload'),
+            type='circle'
+        ),
+        html.Div(id='loading-state', style={'display': 'none'}, children="Loading..."),
+        dcc.Store(id='stored-data')
     ])

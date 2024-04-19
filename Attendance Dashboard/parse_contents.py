@@ -1,12 +1,11 @@
-import os
-from dash import dcc, html
+from dash import html
 import dash_bootstrap_components as dbc
-import plotly.graph_objs as go
 import base64
 import io
 import pandas as pd
 import datetime
 from sections import create_summary_section, create_enrolment_section, create_attendance_section, create_submission_section, create_concerning_students_section
+
 
 def parse_contents(contents, filename, date):
     # Check if any of the parameters are None, return None if any are missing

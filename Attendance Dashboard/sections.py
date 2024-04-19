@@ -6,6 +6,7 @@ import base64
 from data_processing import calculate_summary_statistics, calculate_student_enrolment, calculate_attendance_rate, calculate_submission_rate
 from ml_model import detect_concerning_students
 
+
 def save_file(name, content):
     # Decode and store a file uploaded with Plotly Dash
     data = content.encode("utf8").split(b";base64,")[1]

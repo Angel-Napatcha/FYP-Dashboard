@@ -3,40 +3,34 @@ from dash import html, no_update
 from sections import save_file
 from parse_contents import parse_contents
 
+
 def register_callbacks(app):
     # Callback for processing and displaying uploaded Excel file
     @app.callback(
         Output('output-data-upload', 'children'),
-        Output('loading-state', 'style'), 
-        Output('upload-data', 'style'),
-        [Input('upload-data', 'contents')],
-        [State('upload-data', 'filename'), State('upload-data', 'last_modified')]
+        Output('loading-state', 'style'),  
+        Output('upload-data', 'style'), 
+        Input('upload-data', 'contents'),
+        State('upload-data', 'filename'),
+        State('upload-data', 'last_modified')
     )
     def update_output(list_of_contents, list_of_names, list_of_dates):
-        # Check if there are any files uploaded
-        if list_of_contents is not None:
-            # Ensure all inputs are treated as lists for consistency, even if a single file is uploaded
-            list_of_contents = list_of_contents if isinstance(list_of_contents, list) else [list_of_contents]
-            list_of_names = list_of_names if isinstance(list_of_names, list) else [list_of_names]
-            list_of_dates = list_of_dates if isinstance(list_of_dates, list) else [list_of_dates]
-
-            children = []
-            # Process file uploaded
-            for content, name, date in zip(list_of_contents, list_of_names, list_of_dates):
-                # Validate file type
-                if not (name.endswith('.xls') or name.endswith('.xlsx')):
-                    children.append(html.Div([
-                        f'File "{name}" is not an Excel file and was not uploaded.'
-                    ]))
-                else:
-                    # Process valid Excel file and add to the display
-                    child = parse_contents(content, name, date)
-                    children.append(child)
-                    save_file(name, content)
-                    
-            return children, {'display': 'none'}, {'display': 'none'}
-
-        return [], {'display': 'none'}, no_update
+        if list_of_contents is None:
+            return [], {'display': 'none'}, {'display': 'block'}
+        list_of_contents = list_of_contents if isinstance(list_of_contents, list) else [list_of_contents]
+        list_of_names = list_of_names if isinstance(list_of_names, list) else [list_of_names]
+        list_of_dates = list_of_dates if isinstance(list_of_dates, list) else [list_of_dates]
+        
+        children = []
+        for content, name, date in zip(list_of_contents, list_of_names, list_of_dates):
+            if not (name.endswith('.xls') or name.endswith('.xlsx')):
+                children.append(html.Div(f'File "{name}" is not an Excel file and was not uploaded.', style={'color': 'red'}))
+            else:
+                child = parse_contents(content, name, date)
+                children.append(child)
+                save_file(name, content)
+                
+        return children, {'display': 'none'}, {'display': 'none'}
     
     # Callback for updating content based on selected student enrolment level
     @app.callback(

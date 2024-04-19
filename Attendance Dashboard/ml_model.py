@@ -1,10 +1,10 @@
-import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.linear_model import LinearRegression
 import numpy as np
+
 
 def preprocess_data(df):
    # Check if necessary columns exist
